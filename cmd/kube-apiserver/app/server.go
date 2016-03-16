@@ -39,6 +39,7 @@ import (
 	"k8s.io/kubernetes/pkg/apimachinery/registered"
 	"k8s.io/kubernetes/pkg/apis/autoscaling"
 	"k8s.io/kubernetes/pkg/apis/batch"
+	"k8s.io/kubernetes/pkg/apis/catalog"
 	"k8s.io/kubernetes/pkg/apis/extensions"
 	"k8s.io/kubernetes/pkg/apiserver"
 	"k8s.io/kubernetes/pkg/apiserver/authenticator"
@@ -369,6 +370,29 @@ func Run(s *options.APIServer) error {
 			glog.Fatalf("Invalid extensions storage version or misconfigured etcd: %v", err)
 		}
 		storageDestinations.AddAPIGroup(batch.GroupName, batchEtcdStorage)
+	}
+
+	if !apiGroupVersionOverrides["catalog/v1"].Disable {
+		glog.Infof("Configuring catalog/v1 storage destination")
+		catalogGroup, err := registered.Group(catalog.GroupName)
+		if err != nil {
+			glog.Fatalf("Catalog API is enabled in runtime config, but not enabled in the environment variable KUBE_API_VERSIONS. Error: %v", err)
+		}
+		// Figure out what storage group/version we should use.
+		storageGroupVersion, found := storageVersions[catalogGroup.GroupVersion.Group]
+		if !found {
+			glog.Fatalf("Couldn't find the storage version for group: %q in storageVersions: %v", catalogGroup.GroupVersion.Group, storageVersions)
+		}
+
+		if storageGroupVersion != "catalog/v1" {
+			glog.Fatalf("The storage version for catalog must be either 'catalog/v1'")
+		}
+		glog.Infof("Using %v for catalog group storage version", storageGroupVersion)
+		catalogEtcdStorage, err := newEtcd(api.Codecs, storageGroupVersion, "catalog/__internal", s.EtcdConfig)
+		if err != nil {
+			glog.Fatalf("Invalid catalog storage version or misconfigured etcd: %v", err)
+		}
+		storageDestinations.AddAPIGroup(catalog.GroupName, catalogEtcdStorage)
 	}
 
 	updateEtcdOverrides(s.EtcdServersOverrides, storageVersions, s.EtcdConfig, &storageDestinations, newEtcd)

@@ -45,6 +45,7 @@ import (
 	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
 	"k8s.io/kubernetes/pkg/cloudprovider"
 	"k8s.io/kubernetes/pkg/controller"
+	catalog "k8s.io/kubernetes/pkg/controller/catalog"
 	"k8s.io/kubernetes/pkg/controller/daemon"
 	"k8s.io/kubernetes/pkg/controller/deployment"
 	endpointcontroller "k8s.io/kubernetes/pkg/controller/endpoint"
@@ -321,6 +322,17 @@ func StartControllers(s *options.CMServer, kubeClient *client.Client, kubeconfig
 			glog.Infof("Starting ReplicaSet controller")
 			go replicaset.NewReplicaSetController(clientset.NewForConfigOrDie(restclient.AddUserAgent(kubeconfig, "replicaset-controller")), ResyncPeriod(s), replicaset.BurstReplicas, s.LookupCacheSizeForRS).
 				Run(s.ConcurrentRSSyncs, wait.NeverStop)
+		}
+	}
+
+	groupVersion = "catalog/v1"
+	resources, found = resourceMap[groupVersion]
+	// TODO: this needs to be dynamic so users don't have to restart their controller manager if they change the apiserver
+	if containsVersion(versions, groupVersion) && found {
+		if containsResource(resources, "catalogs") {
+			glog.Infof("Starting catalog controller")
+			go catalog.NewCatalogController(clientset.NewForConfigOrDie(restclient.AddUserAgent(kubeconfig, "catalog-controller")), ResyncPeriod(s)).
+				Run(wait.NeverStop)
 		}
 	}
 

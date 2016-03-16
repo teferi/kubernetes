@@ -40,6 +40,14 @@
    {
     "path": "/apis/batch",
     "description": "get information of a group"
+   },
+   {
+    "path": "/apis/catalog/v1",
+    "description": "API at /apis/catalog/v1"
+   },
+   {
+    "path": "/apis/catalog",
+    "description": "get information of a group"
    }
   ],
   "apiVersion": "",

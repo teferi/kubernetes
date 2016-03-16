@@ -22,6 +22,7 @@ import (
 	"github.com/golang/glog"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
+	"k8s.io/kubernetes/pkg/apis/catalog"
 	"k8s.io/kubernetes/pkg/apis/extensions"
 	"k8s.io/kubernetes/pkg/labels"
 )
@@ -555,4 +556,17 @@ func (s *StoreToPVCFetcher) GetPersistentVolumeClaimInfo(namespace string, id st
 	}
 
 	return o.(*api.PersistentVolumeClaim), nil
+}
+
+// StoreToCatalogLister gives a store List and Exists methods. The store must contain only Catalogs.
+type StoreToCatalogLister struct {
+	Store
+}
+
+// StoreToCatalogLister lists all catalogs in the store.
+func (s *StoreToCatalogLister) List() (catalogs catalog.CatalogList, err error) {
+	for _, c := range s.Store.List() {
+		catalogs.Items = append(catalogs.Items, *(c.(*catalog.Catalog)))
+	}
+	return catalogs, nil
 }

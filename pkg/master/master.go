@@ -33,6 +33,7 @@ import (
 	"k8s.io/kubernetes/pkg/apimachinery/registered"
 	"k8s.io/kubernetes/pkg/apis/autoscaling"
 	"k8s.io/kubernetes/pkg/apis/batch"
+	"k8s.io/kubernetes/pkg/apis/catalog"
 	"k8s.io/kubernetes/pkg/apis/extensions"
 	"k8s.io/kubernetes/pkg/apiserver"
 	apiservermetrics "k8s.io/kubernetes/pkg/apiserver/metrics"
@@ -40,6 +41,9 @@ import (
 	"k8s.io/kubernetes/pkg/healthz"
 	kubeletclient "k8s.io/kubernetes/pkg/kubelet/client"
 	"k8s.io/kubernetes/pkg/master/ports"
+	catetcd "k8s.io/kubernetes/pkg/registry/catalog/etcd"
+	catentryetcd "k8s.io/kubernetes/pkg/registry/catalogentry/etcd"
+	catentryclaimetcd "k8s.io/kubernetes/pkg/registry/catalogentryclaim/etcd"
 	"k8s.io/kubernetes/pkg/registry/componentstatus"
 	configmapetcd "k8s.io/kubernetes/pkg/registry/configmap/etcd"
 	controlleretcd "k8s.io/kubernetes/pkg/registry/controller/etcd"
@@ -322,6 +326,38 @@ func (m *Master) InstallAPIs(c *Config) {
 			Name:             batchGroupMeta.GroupVersion.Group,
 			Versions:         []unversioned.GroupVersionForDiscovery{batchGVForDiscovery},
 			PreferredVersion: batchGVForDiscovery,
+		}
+		allGroups = append(allGroups, group)
+	}
+
+	// Install catalog unless disabled.
+	if !m.ApiGroupVersionOverrides["catalog/v1"].Disable {
+		catalogResources := m.getCatalogResources(c)
+		catalogGroupMeta := registered.GroupOrDie(catalog.GroupName)
+
+		// Hard code preferred group version to catalog/v1
+		catalogGroupMeta.GroupVersion = unversioned.GroupVersion{Group: "catalog", Version: "v1"}
+
+		apiGroupInfo := genericapiserver.APIGroupInfo{
+			GroupMeta: *catalogGroupMeta,
+			VersionedResourcesStorageMap: map[string]map[string]rest.Storage{
+				"v1": catalogResources,
+			},
+			OptionsExternalVersion: &registered.GroupOrDie(api.GroupName).GroupVersion,
+			Scheme:                 api.Scheme,
+			ParameterCodec:         api.ParameterCodec,
+			NegotiatedSerializer:   api.Codecs,
+		}
+		apiGroupsInfo = append(apiGroupsInfo, apiGroupInfo)
+
+		catalogGVForDiscovery := unversioned.GroupVersionForDiscovery{
+			GroupVersion: catalogGroupMeta.GroupVersion.String(),
+			Version:      catalogGroupMeta.GroupVersion.Version,
+		}
+		group := unversioned.APIGroup{
+			Name:             catalogGroupMeta.GroupVersion.Group,
+			Versions:         []unversioned.GroupVersionForDiscovery{catalogGVForDiscovery},
+			PreferredVersion: catalogGVForDiscovery,
 		}
 		allGroups = append(allGroups, group)
 	}
@@ -811,6 +847,51 @@ func (m *Master) getBatchResources(c *Config) map[string]rest.Storage {
 	storage := map[string]rest.Storage{}
 	if isEnabled("jobs") {
 		m.constructJobResources(c, storage)
+	}
+	return storage
+}
+
+// constructCatalogResources makes Catalog resources and adds them to the storage map.
+// They're installed in both catalog and extensions. It's assumed that you've
+// already done the check that they should be on.
+func (m *Master) constructCatalogResources(c *Config, restStorage map[string]rest.Storage) {
+	// Note that catalog's storage settings are changed by changing the catalog
+	// group. Clearly we want all catalog to be stored in the same place no
+	// matter where they're accessed from.
+	restOptions := func(resource string) generic.RESTOptions {
+		return generic.RESTOptions{
+			Storage:                 c.StorageDestinations.Search([]string{catalog.GroupName}, resource),
+			Decorator:               m.StorageDecorator(),
+			DeleteCollectionWorkers: m.deleteCollectionWorkers,
+		}
+	}
+	catalogStorage, catalogStatusStorage := catetcd.NewREST(restOptions("catalog"))
+	restStorage["catalogs"] = catalogStorage
+	restStorage["catalogs/status"] = catalogStatusStorage
+
+	catalogEntryStorage, catalogEntryStatusStorage := catentryetcd.NewREST(restOptions("catalogentry"))
+	restStorage["catalogentries"] = catalogEntryStorage
+	restStorage["catalogentries/status"] = catalogEntryStatusStorage
+
+	catalogEntryClaimStorage, catalogEntryClaimStatusStorage := catentryclaimetcd.NewREST(restOptions("catalogentryclaim"))
+	restStorage["catalogentryclaims"] = catalogEntryClaimStorage
+	restStorage["catalogentryclaims/status"] = catalogEntryClaimStatusStorage
+}
+
+// getCatalogResources returns the resources for catalog api
+func (m *Master) getCatalogResources(c *Config) map[string]rest.Storage {
+	resourceOverrides := m.ApiGroupVersionOverrides["catalog/v1"].ResourceOverrides
+	isEnabled := func(resource string) bool {
+		// Check if the resource has been overriden.
+		if enabled, ok := resourceOverrides[resource]; ok {
+			return enabled
+		}
+		return !m.ApiGroupVersionOverrides["catalog/v1"].Disable
+	}
+
+	storage := map[string]rest.Storage{}
+	if isEnabled("catalogs") {
+		m.constructCatalogResources(c, storage)
 	}
 	return storage
 }
