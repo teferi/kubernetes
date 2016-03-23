@@ -563,10 +563,36 @@ type StoreToCatalogLister struct {
 	Store
 }
 
-// StoreToCatalogLister lists all catalogs in the store.
+// StoreToCatalogLister lists all Catalogs in the store.
 func (s *StoreToCatalogLister) List() (catalogs catalog.CatalogList, err error) {
 	for _, c := range s.Store.List() {
 		catalogs.Items = append(catalogs.Items, *(c.(*catalog.Catalog)))
 	}
 	return catalogs, nil
+}
+
+// StoreToCatalogEntryLister gives a store List and Exists methods. The store must contain only CatalogEntries.
+type StoreToCatalogEntryLister struct {
+	Store
+}
+
+// StoreToCatalogEntryLister lists all CatalogEntries in the store.
+func (s *StoreToCatalogEntryLister) List() (catalogEntries catalog.CatalogEntryList, err error) {
+	for _, c := range s.Store.List() {
+		catalogEntries.Items = append(catalogEntries.Items, *(c.(*catalog.CatalogEntry)))
+	}
+	return catalogEntries, nil
+}
+
+// StoreToCatalogLister gives a store List and Exists methods. The store must contain only Catalogs.
+type StoreToCatalogEntryClaimLister struct {
+	Store
+}
+
+// StoreToCatalogEntryClaimLister lists all CatalogEntryClaims in the store.
+func (s *StoreToCatalogEntryClaimLister) List() (catalogEntryClaims catalog.CatalogEntryClaimList, err error) {
+	for _, c := range s.Store.List() {
+		catalogEntryClaims.Items = append(catalogEntryClaims.Items, *(c.(*catalog.CatalogEntryClaim)))
+	}
+	return catalogEntryClaims, nil
 }

@@ -30,9 +30,13 @@ import (
 )
 
 type CatalogController struct {
-	kubeClient        clientset.Interface
-	catalogStore      cache.StoreToCatalogLister
-	catalogController *framework.Controller
+	kubeClient                  clientset.Interface
+	catalogStore                cache.StoreToCatalogLister
+	catalogController           *framework.Controller
+	catalogEntryStore           cache.StoreToCatalogEntryLister
+	catalogEntryController      *framework.Controller
+	catalogEntryClaimStore      cache.StoreToCatalogEntryClaimLister
+	catalogEntryClaimController *framework.Controller
 }
 
 // NewCalatogController returns a new catalog controller to sync catalog entries and claims.
@@ -59,6 +63,42 @@ func NewCatalogController(kubeClient clientset.Interface, resyncPeriod controlle
 		},
 	)
 
+	cc.catalogEntryStore.Store, cc.catalogEntryController = framework.NewInformer(
+		&cache.ListWatch{
+			ListFunc: func(options api.ListOptions) (runtime.Object, error) {
+				return cc.kubeClient.Catalog().CatalogEntries(api.NamespaceAll).List(options)
+			},
+			WatchFunc: func(options api.ListOptions) (watch.Interface, error) {
+				return cc.kubeClient.Catalog().CatalogEntries(api.NamespaceAll).Watch(options)
+			},
+		},
+		&catalog.CatalogEntry{},
+		resyncPeriod(),
+		framework.ResourceEventHandlerFuncs{
+			AddFunc:    cc.catalogEntryAdd,
+			UpdateFunc: func(_, obj interface{}) { cc.catalogEntryUpdate(obj) },
+			DeleteFunc: cc.catalogEntryDelete,
+		},
+	)
+
+	cc.catalogEntryClaimStore.Store, cc.catalogEntryClaimController = framework.NewInformer(
+		&cache.ListWatch{
+			ListFunc: func(options api.ListOptions) (runtime.Object, error) {
+				return cc.kubeClient.Catalog().CatalogEntryClaims(api.NamespaceAll).List(options)
+			},
+			WatchFunc: func(options api.ListOptions) (watch.Interface, error) {
+				return cc.kubeClient.Catalog().CatalogEntryClaims(api.NamespaceAll).Watch(options)
+			},
+		},
+		&catalog.CatalogEntryClaim{},
+		resyncPeriod(),
+		framework.ResourceEventHandlerFuncs{
+			AddFunc:    cc.catalogEntryClaimAdd,
+			UpdateFunc: func(_, obj interface{}) { cc.catalogEntryClaimUpdate(obj) },
+			DeleteFunc: cc.catalogEntryClaimDelete,
+		},
+	)
+
 	return cc
 }
 
@@ -66,6 +106,8 @@ func NewCatalogController(kubeClient clientset.Interface, resyncPeriod controlle
 func (cc *CatalogController) Run(stopCh <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 	go cc.catalogController.Run(stopCh)
+	go cc.catalogEntryController.Run(stopCh)
+	go cc.catalogEntryClaimController.Run(stopCh)
 	<-stopCh
 	glog.Infof("Shutting down catalog controller")
 }
@@ -83,4 +125,34 @@ func (cc *CatalogController) catalogUpdate(obj interface{}) {
 func (cc *CatalogController) catalogDelete(obj interface{}) {
 	c := obj.(*catalog.Catalog)
 	glog.V(4).Infof("Catalog %s was deleted", c.Name)
+}
+
+func (cc *CatalogController) catalogEntryAdd(obj interface{}) {
+	c := obj.(*catalog.CatalogEntry)
+	glog.V(4).Infof("CatalogEntry %s was added", c.Name)
+}
+
+func (cc *CatalogController) catalogEntryUpdate(obj interface{}) {
+	c := obj.(*catalog.CatalogEntry)
+	glog.V(4).Infof("CatalogEntry %s was updated", c.Name)
+}
+
+func (cc *CatalogController) catalogEntryDelete(obj interface{}) {
+	c := obj.(*catalog.CatalogEntry)
+	glog.V(4).Infof("CatalogEntry %s was deleted", c.Name)
+}
+
+func (cc *CatalogController) catalogEntryClaimAdd(obj interface{}) {
+	c := obj.(*catalog.CatalogEntryClaim)
+	glog.V(4).Infof("CatalogEntryClaim %s was added", c.Name)
+}
+
+func (cc *CatalogController) catalogEntryClaimUpdate(obj interface{}) {
+	c := obj.(*catalog.CatalogEntryClaim)
+	glog.V(4).Infof("CatalogEntryClaim %s was updated", c.Name)
+}
+
+func (cc *CatalogController) catalogEntryClaimDelete(obj interface{}) {
+	c := obj.(*catalog.CatalogEntryClaim)
+	glog.V(4).Infof("CatalogEntryClaim %s was deleted", c.Name)
 }
