@@ -24,6 +24,7 @@ import (
 	"k8s.io/kubernetes/pkg/apimachinery/registered"
 	"k8s.io/kubernetes/pkg/apis/autoscaling"
 	"k8s.io/kubernetes/pkg/apis/batch"
+	"k8s.io/kubernetes/pkg/apis/catalog"
 	"k8s.io/kubernetes/pkg/apis/extensions"
 	"k8s.io/kubernetes/pkg/client/restclient"
 	"k8s.io/kubernetes/pkg/client/typed/discovery"
@@ -83,7 +84,16 @@ func New(c *restclient.Config) (*Client, error) {
 		}
 	}
 
-	return &Client{RESTClient: client, AutoscalingClient: autoscalingClient, BatchClient: batchClient, ExtensionsClient: extensionsClient, DiscoveryClient: discoveryClient}, nil
+	var catalogClient *CatalogClient
+	if registered.IsRegistered(catalog.GroupName) {
+		catalogConfig := *c
+		catalogClient, err = NewCatalog(&catalogConfig)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &Client{RESTClient: client, AutoscalingClient: autoscalingClient, BatchClient: batchClient, ExtensionsClient: extensionsClient, DiscoveryClient: discoveryClient, CatalogClient: catalogClient}, nil
 }
 
 // MatchesServerVersion queries the server to compares the build version

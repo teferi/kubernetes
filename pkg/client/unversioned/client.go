@@ -47,6 +47,7 @@ type Interface interface {
 	Autoscaling() AutoscalingInterface
 	Batch() BatchInterface
 	Extensions() ExtensionsInterface
+	Catalog() CatalogInterface
 	Discovery() discovery.DiscoveryInterface
 }
 
@@ -119,6 +120,7 @@ type Client struct {
 	*AutoscalingClient
 	*BatchClient
 	*ExtensionsClient
+	*CatalogClient
 	*discovery.DiscoveryClient
 }
 

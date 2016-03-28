@@ -42,6 +42,7 @@ import (
 	"k8s.io/kubernetes/pkg/apimachinery/registered"
 	"k8s.io/kubernetes/pkg/apis/autoscaling"
 	"k8s.io/kubernetes/pkg/apis/batch"
+	"k8s.io/kubernetes/pkg/apis/catalog"
 	"k8s.io/kubernetes/pkg/apis/extensions"
 	"k8s.io/kubernetes/pkg/apis/metrics"
 	"k8s.io/kubernetes/pkg/client/restclient"
@@ -247,6 +248,8 @@ func NewFactory(optionalClientConfig clientcmd.ClientConfig) *Factory {
 				return client.BatchClient.RESTClient, nil
 			case extensions.GroupName:
 				return client.ExtensionsClient.RESTClient, nil
+			case catalog.GroupName:
+				return client.CatalogClient.RESTClient, nil
 			}
 			return nil, fmt.Errorf("unable to get RESTClient for resource '%s'", mapping.Resource)
 		},
