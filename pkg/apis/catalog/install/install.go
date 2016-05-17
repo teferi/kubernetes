@@ -11,7 +11,7 @@ import (
 	"k8s.io/kubernetes/pkg/apimachinery"
 	"k8s.io/kubernetes/pkg/apimachinery/registered"
 	"k8s.io/kubernetes/pkg/apis/catalog"
-	"k8s.io/kubernetes/pkg/apis/catalog/v1"
+	"k8s.io/kubernetes/pkg/apis/catalog/v1alpha1"
 	"k8s.io/kubernetes/pkg/runtime"
 	"k8s.io/kubernetes/pkg/util/sets"
 )
@@ -21,7 +21,7 @@ const importPrefix = "k8s.io/kubernetes/pkg/apis/catalog"
 var accessor = meta.NewAccessor()
 
 // availableVersions lists all known external versions for this group from most preferred to least preferred
-var availableVersions = []unversioned.GroupVersion{v1.SchemeGroupVersion}
+var availableVersions = []unversioned.GroupVersion{v1alpha1.SchemeGroupVersion}
 
 func init() {
 	registered.RegisterVersions(availableVersions)
@@ -75,7 +75,7 @@ func newRESTMapper(externalVersions []unversioned.GroupVersion) meta.RESTMapper 
 
 func interfacesFor(version unversioned.GroupVersion) (*meta.VersionInterfaces, error) {
 	switch version {
-	case v1.SchemeGroupVersion:
+	case v1alpha1.SchemeGroupVersion:
 		return &meta.VersionInterfaces{
 			ObjectConvertor:  api.Scheme,
 			MetadataAccessor: accessor,
@@ -96,8 +96,8 @@ func addVersionsToScheme(externalVersions ...unversioned.GroupVersion) {
 			continue
 		}
 		switch v {
-		case v1.SchemeGroupVersion:
-			v1.AddToScheme(api.Scheme)
+		case v1alpha1.SchemeGroupVersion:
+			v1alpha1.AddToScheme(api.Scheme)
 		default:
 			glog.Errorf("Version %s is not known, so it will not be added to the Scheme.", v)
 			continue

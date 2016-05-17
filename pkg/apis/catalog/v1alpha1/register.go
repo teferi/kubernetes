@@ -1,4 +1,4 @@
-package v1
+package v1alpha1
 
 import (
 	"k8s.io/kubernetes/pkg/api/unversioned"
@@ -9,7 +9,7 @@ import (
 const GroupName = "catalog"
 
 // SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = unversioned.GroupVersion{Group: GroupName, Version: "v1"}
+var SchemeGroupVersion = unversioned.GroupVersion{Group: GroupName, Version: "v1alpha1"}
 
 // Resource takes an unqualified resource and returns back a Group qualified GroupResource
 func Resource(resource string) unversioned.GroupResource {
