@@ -20,12 +20,6 @@ limitations under the License.
 package app
 
 import (
-	"crypto/tls"
-	"net"
-
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-
 	"k8s.io/kubernetes/cmd/catalog-apiserver/app/options"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/rest"
@@ -33,53 +27,65 @@ import (
 	"k8s.io/kubernetes/pkg/apimachinery/registered"
 	"k8s.io/kubernetes/pkg/apis/catalog"
 	"k8s.io/kubernetes/pkg/genericapiserver"
+	catalogetcd "k8s.io/kubernetes/pkg/registry/catalog/etcd"
+	"k8s.io/kubernetes/pkg/registry/generic"
+	"k8s.io/kubernetes/pkg/storage/storagebackend"
 
 	_ "k8s.io/kubernetes/pkg/apis/catalog/install"
+
+	"github.com/golang/glog"
 )
-
-// NewAPIServerCommand creates a *cobra.Command object with default parameters
-func NewAPIServerCommand() *cobra.Command {
-	s := options.NewAPIServer()
-	s.AddFlags(pflag.CommandLine)
-	cmd := &cobra.Command{
-		Use: "catalog-apiserver",
-		Long: `The Catalog API server validates and configures data for the 
-		resource catalog api objects. The API Server services REST operations
-		and provides the frontend to the cluster's shared state through which
-		all other components interact.`,
-		Run: func(cmd *cobra.Command, args []string) {
-		},
-	}
-
-	return cmd
-}
 
 // Run runs the specified APIServer.  This should never exit.
 func Run(s *options.APIServer) error {
 	genericapiserver.DefaultAndValidateRunOptions(s.ServerRunOptions)
 
-	config := genericapiserver.NewConfig(s.ServerRunOptions)
+	c := genericapiserver.NewConfig(s.ServerRunOptions)
 
-	config.ProxyDialer = func(network, addr string) (net.Conn, error) { return nil, nil }
-	config.ProxyTLSClientConfig = &tls.Config{}
-	config.APIPrefix = "/api"
-	config.APIGroupPrefix = "/apis"
-	config.Serializer = api.Codecs
+	/*c.ProxyDialer = func(network, addr string) (net.Conn, error) { return nil, nil }
+	c.ProxyTLSClientConfig = &tls.Config{}
+	c.APIPrefix = "/api"
+	c.APIGroupPrefix = "/apis"*/
+	c.Serializer = api.Codecs
 
-	m, err := genericapiserver.New(config)
+	m, err := genericapiserver.New(c)
 	if err != nil {
 		return err
 	}
 
+	// Create Storage
+	config := storagebackend.Config{
+		Prefix:     genericapiserver.DefaultEtcdPathPrefix,
+		ServerList: s.ServerRunOptions.StorageConfig.ServerList,
+	}
+	glog.Errorf("%v", config)
+	storageFactory := genericapiserver.NewDefaultStorageFactory(config, "application/json", api.Codecs, genericapiserver.NewDefaultResourceEncodingConfig(), genericapiserver.NewResourceConfig())
+	storage, err := storageFactory.New(unversioned.GroupResource{Group: catalog.GroupName, Resource: "catalog"})
+	if err != nil {
+		return err
+	}
+
+	restOptions := generic.RESTOptions{
+		Storage:                 storage,
+		Decorator:               m.StorageDecorator(),
+		DeleteCollectionWorkers: s.DeleteCollectionWorkers,
+	}
+	restStorageMap := map[string]rest.Storage{}
+	catalogStorage := catalogetcd.NewREST(restOptions)
+	restStorageMap["catalogs"] = catalogStorage
+
+	// Create API Group
 	catalogGroupMeta := registered.GroupOrDie(catalog.GroupName)
 	catalogGroupMeta.GroupVersion = unversioned.GroupVersion{Group: "catalog", Version: "v1alpha1"}
 	apiGroupInfo := &genericapiserver.APIGroupInfo{
-		GroupMeta:                    *catalogGroupMeta,
-		VersionedResourcesStorageMap: map[string]map[string]rest.Storage{},
-		OptionsExternalVersion:       &registered.GroupOrDie(api.GroupName).GroupVersion,
-		Scheme:                       api.Scheme,
-		ParameterCodec:               api.ParameterCodec,
-		NegotiatedSerializer:         api.Codecs,
+		GroupMeta: *catalogGroupMeta,
+		VersionedResourcesStorageMap: map[string]map[string]rest.Storage{
+			"v1alpha1": restStorageMap,
+		},
+		OptionsExternalVersion: &registered.GroupOrDie(api.GroupName).GroupVersion,
+		Scheme:                 api.Scheme,
+		ParameterCodec:         api.ParameterCodec,
+		NegotiatedSerializer:   api.Codecs,
 	}
 
 	m.InstallAPIGroup(apiGroupInfo)
