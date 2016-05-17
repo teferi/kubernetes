@@ -28,7 +28,13 @@ import (
 
 	"k8s.io/kubernetes/cmd/catalog-apiserver/app/options"
 	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/api/rest"
+	"k8s.io/kubernetes/pkg/api/unversioned"
+	"k8s.io/kubernetes/pkg/apimachinery/registered"
+	"k8s.io/kubernetes/pkg/apis/catalog"
 	"k8s.io/kubernetes/pkg/genericapiserver"
+
+	_ "k8s.io/kubernetes/pkg/apis/catalog/install"
 )
 
 // NewAPIServerCommand creates a *cobra.Command object with default parameters
@@ -64,6 +70,19 @@ func Run(s *options.APIServer) error {
 	if err != nil {
 		return err
 	}
+
+	catalogGroupMeta := registered.GroupOrDie(catalog.GroupName)
+	catalogGroupMeta.GroupVersion = unversioned.GroupVersion{Group: "catalog", Version: "v1alpha1"}
+	apiGroupInfo := &genericapiserver.APIGroupInfo{
+		GroupMeta:                    *catalogGroupMeta,
+		VersionedResourcesStorageMap: map[string]map[string]rest.Storage{},
+		OptionsExternalVersion:       &registered.GroupOrDie(api.GroupName).GroupVersion,
+		Scheme:                       api.Scheme,
+		ParameterCodec:               api.ParameterCodec,
+		NegotiatedSerializer:         api.Codecs,
+	}
+
+	m.InstallAPIGroup(apiGroupInfo)
 
 	m.Run(s.ServerRunOptions)
 	return nil
