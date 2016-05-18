@@ -32,8 +32,6 @@ import (
 	"k8s.io/kubernetes/pkg/storage/storagebackend"
 
 	_ "k8s.io/kubernetes/pkg/apis/catalog/install"
-
-	"github.com/golang/glog"
 )
 
 // Run runs the specified APIServer.  This should never exit.
@@ -58,7 +56,6 @@ func Run(s *options.APIServer) error {
 		Prefix:     genericapiserver.DefaultEtcdPathPrefix,
 		ServerList: s.ServerRunOptions.StorageConfig.ServerList,
 	}
-	glog.Errorf("%v", config)
 	storageFactory := genericapiserver.NewDefaultStorageFactory(config, "application/json", api.Codecs, genericapiserver.NewDefaultResourceEncodingConfig(), genericapiserver.NewResourceConfig())
 	storage, err := storageFactory.New(unversioned.GroupResource{Group: catalog.GroupName, Resource: "catalog"})
 	if err != nil {
@@ -70,9 +67,11 @@ func Run(s *options.APIServer) error {
 		Decorator:               m.StorageDecorator(),
 		DeleteCollectionWorkers: s.DeleteCollectionWorkers,
 	}
-	restStorageMap := map[string]rest.Storage{}
+
 	catalogStorage := catalogetcd.NewREST(restOptions)
-	restStorageMap["catalogs"] = catalogStorage
+	restStorageMap := map[string]rest.Storage{
+		"catalogs": catalogStorage,
+	}
 
 	// Create API Group
 	catalogGroupMeta := registered.GroupOrDie(catalog.GroupName)
@@ -82,13 +81,14 @@ func Run(s *options.APIServer) error {
 		VersionedResourcesStorageMap: map[string]map[string]rest.Storage{
 			"v1alpha1": restStorageMap,
 		},
-		OptionsExternalVersion: &registered.GroupOrDie(api.GroupName).GroupVersion,
-		Scheme:                 api.Scheme,
-		ParameterCodec:         api.ParameterCodec,
-		NegotiatedSerializer:   api.Codecs,
+		Scheme:               api.Scheme,
+		NegotiatedSerializer: api.Codecs,
 	}
 
-	m.InstallAPIGroup(apiGroupInfo)
+	err = m.InstallAPIGroup(apiGroupInfo)
+	if err != nil {
+		return err
+	}
 
 	m.Run(s.ServerRunOptions)
 	return nil

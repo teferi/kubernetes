@@ -31,6 +31,7 @@ func addKnownTypes(scheme *runtime.Scheme) {
 		&CatalogEntryClaim{},
 		&CatalogEntryClaimList{},
 		&api.ListOptions{},
+		&api.DeleteOptions{},
 	)
 }
 
