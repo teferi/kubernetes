@@ -21,7 +21,7 @@ type CatalogEntry struct {
 	unversioned.TypeMeta `json:",inline"`
 	v1.ObjectMeta        `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Catalog     string `protobuf:"bytes,4,opt,name=catalog"`
+	Catalog     string `json:"catalog,omitempty" protobuf:"bytes,4,opt,name=catalog"`
 	Description string `json:"description,omitempty" protobuf:"bytes,3,opt,name=description"`
 }
 

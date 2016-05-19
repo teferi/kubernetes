@@ -692,6 +692,7 @@ func (x *CatalogEntry) CodecEncodeSelf(e *codec1978.Encoder) {
 			_, _, _ = yysep2, yyq2, yy2arr2
 			const yyr2 bool = false
 			yyq2[0] = true
+			yyq2[1] = x.Catalog != ""
 			yyq2[2] = x.Description != ""
 			yyq2[3] = x.Kind != ""
 			yyq2[4] = x.APIVersion != ""
@@ -699,7 +700,7 @@ func (x *CatalogEntry) CodecEncodeSelf(e *codec1978.Encoder) {
 			if yyr2 || yy2arr2 {
 				r.EncodeArrayStart(5)
 			} else {
-				yynn2 = 1
+				yynn2 = 0
 				for _, b := range yyq2 {
 					if b {
 						yynn2++
@@ -727,21 +728,27 @@ func (x *CatalogEntry) CodecEncodeSelf(e *codec1978.Encoder) {
 			}
 			if yyr2 || yy2arr2 {
 				z.EncSendContainerState(codecSelfer_containerArrayElem1234)
-				yym9 := z.EncBinary()
-				_ = yym9
-				if false {
+				if yyq2[1] {
+					yym9 := z.EncBinary()
+					_ = yym9
+					if false {
+					} else {
+						r.EncodeString(codecSelferC_UTF81234, string(x.Catalog))
+					}
 				} else {
-					r.EncodeString(codecSelferC_UTF81234, string(x.Catalog))
+					r.EncodeString(codecSelferC_UTF81234, "")
 				}
 			} else {
-				z.EncSendContainerState(codecSelfer_containerMapKey1234)
-				r.EncodeString(codecSelferC_UTF81234, string("Catalog"))
-				z.EncSendContainerState(codecSelfer_containerMapValue1234)
-				yym10 := z.EncBinary()
-				_ = yym10
-				if false {
-				} else {
-					r.EncodeString(codecSelferC_UTF81234, string(x.Catalog))
+				if yyq2[1] {
+					z.EncSendContainerState(codecSelfer_containerMapKey1234)
+					r.EncodeString(codecSelferC_UTF81234, string("catalog"))
+					z.EncSendContainerState(codecSelfer_containerMapValue1234)
+					yym10 := z.EncBinary()
+					_ = yym10
+					if false {
+					} else {
+						r.EncodeString(codecSelferC_UTF81234, string(x.Catalog))
+					}
 				}
 			}
 			if yyr2 || yy2arr2 {
@@ -887,7 +894,7 @@ func (x *CatalogEntry) codecDecodeSelfFromMap(l int, d *codec1978.Decoder) {
 				yyv4 := &x.ObjectMeta
 				yyv4.CodecDecodeSelf(d)
 			}
-		case "Catalog":
+		case "catalog":
 			if r.TryDecodeAsNil() {
 				x.Catalog = ""
 			} else {
