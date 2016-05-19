@@ -7,57 +7,57 @@ import (
 
 type Catalog struct {
 	unversioned.TypeMeta `json:",inline"`
-	v1.ObjectMeta        `json:"metadata,omitempty"`
+	v1.ObjectMeta        `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 }
 
 type CatalogList struct {
 	unversioned.TypeMeta `json:",inline"`
-	unversioned.ListMeta `json:"metadata,omitempty"`
+	unversioned.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Items []Catalog `json:"items"`
+	Items []Catalog `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
 type CatalogEntry struct {
 	unversioned.TypeMeta `json:",inline"`
-	v1.ObjectMeta        `json:"metadata,omitempty"`
+	v1.ObjectMeta        `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Catalog     v1.LocalObjectReference `json:"catalog"`
-	Description string                  `json:"description,omitempty"`
+	Catalog     v1.LocalObjectReference `json:"catalog" protobuf:"bytes,2,opt,name=catalog"`
+	Description string                  `json:"description,omitempty" protobuf:"bytes,3,opt,name=description"`
 
-	Reference v1.ObjectReference `json:"reference"`
-	Data      map[string]string  `json:"data,omitempty"`
+	Reference v1.ObjectReference `json:"reference" protobuf:"bytes,4,opt,name=reference"`
+	Data      map[string]string  `json:"data,omitempty" protobuf:"bytes,5,rep,name=data"`
 }
 
 type CatalogEntryList struct {
 	unversioned.TypeMeta `json:",inline"`
-	unversioned.ListMeta `json:"metadata,omitempty"`
+	unversioned.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Items []CatalogEntry `json:"items"`
+	Items []CatalogEntry `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
 type CatalogEntryClaim struct {
 	unversioned.TypeMeta `json:",inline"`
-	v1.ObjectMeta        `json:"metadata,omitempty"`
+	v1.ObjectMeta        `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Spec   CatalogEntryClaimSpec   `json:"spec"`
-	Status CatalogEntryClaimStatus `json:"status,omitempty"`
+	Spec   CatalogEntryClaimSpec   `json:"spec" protobuf:"bytes,2,opt,name=spec"`
+	Status CatalogEntryClaimStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
 }
 
 type CatalogEntryClaimList struct {
 	unversioned.TypeMeta `json:",inline"`
-	unversioned.ListMeta `json:"metadata,omitempty"`
+	unversioned.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Items []CatalogEntryClaim `json:"items"`
+	Items []CatalogEntryClaim `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
 type CatalogEntryClaimSpec struct {
-	Catalog string `json:"catalog"`
-	Entry   string `json:"entry"`
+	Catalog string `json:"catalog" protobuf:"bytes,1,opt,name=catalog"`
+	Entry   string `json:"entry" protobuf:"bytes,2,opt,name=entry"`
 }
 
 type CatalogEntryClaimStatus struct {
-	State            CatalogEntryClaimState `json:"state"`
-	ProvisionedItems []v1.ObjectReference   `json:"provisionedItems,omitempty"`
+	State            CatalogEntryClaimState `json:"state" protobuf:"bytes,1,opt,name=state,casttype=CatalogEntryClaimState"`
+	ProvisionedItems []v1.ObjectReference   `json:"provisionedItems,omitempty" protobuf:"bytes,2,rep,name=provisionedItems"`
 }
 
 type CatalogEntryClaimState string
