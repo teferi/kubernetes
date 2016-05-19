@@ -53,7 +53,6 @@ fi
 BASH_TARGETS="
 	generated-protobuf
 	codegen
-	codecgen
 	generated-docs
 	generated-swagger-docs
 	swagger-spec
