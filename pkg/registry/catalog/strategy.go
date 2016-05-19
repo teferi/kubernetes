@@ -20,7 +20,7 @@ type catalogStrategy struct {
 var Strategy = catalogStrategy{api.Scheme, api.SimpleNameGenerator}
 
 func (catalogStrategy) NamespaceScoped() bool {
-	return true
+	return false
 }
 
 func (catalogStrategy) PrepareForCreate(obj runtime.Object) {
