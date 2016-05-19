@@ -82,6 +82,7 @@ func Run(s *options.APIServer) error {
 			"v1alpha1": restStorageMap,
 		},
 		Scheme:               api.Scheme,
+		ParameterCodec:       api.ParameterCodec,
 		NegotiatedSerializer: api.Codecs,
 	}
 
