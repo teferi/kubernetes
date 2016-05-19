@@ -25,11 +25,8 @@ type CatalogEntry struct {
 	unversioned.TypeMeta
 	api.ObjectMeta
 
-	Catalog     api.LocalObjectReference
+	Catalog     string
 	Description string
-
-	Reference api.ObjectReference
-	Data      map[string]string
 }
 
 type CatalogEntryList struct {
@@ -38,39 +35,3 @@ type CatalogEntryList struct {
 
 	Items []CatalogEntry
 }
-
-// +genclient=true
-
-type CatalogEntryClaim struct {
-	unversioned.TypeMeta
-	api.ObjectMeta
-
-	Spec   CatalogEntryClaimSpec
-	Status CatalogEntryClaimStatus
-}
-
-type CatalogEntryClaimList struct {
-	unversioned.TypeMeta
-	unversioned.ListMeta
-
-	Items []CatalogEntryClaim
-}
-
-type CatalogEntryClaimSpec struct {
-	Catalog string
-	Entry   string
-}
-
-type CatalogEntryClaimStatus struct {
-	State            CatalogEntryClaimState
-	ProvisionedItems []api.ObjectReference
-}
-
-type CatalogEntryClaimState string
-
-const (
-	CatalogEntryClaimStateNew         CatalogEntryClaimState = "New"
-	CatalogEntryClaimStateAdmitted    CatalogEntryClaimState = "Admitted"
-	CatalogEntryClaimStateRejected    CatalogEntryClaimState = "Rejected"
-	CatalogEntryClaimStateProvisioned CatalogEntryClaimState = "Provisioned"
-)

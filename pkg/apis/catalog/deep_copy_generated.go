@@ -30,10 +30,6 @@ func init() {
 	if err := api.Scheme.AddGeneratedDeepCopyFuncs(
 		DeepCopy_catalog_Catalog,
 		DeepCopy_catalog_CatalogEntry,
-		DeepCopy_catalog_CatalogEntryClaim,
-		DeepCopy_catalog_CatalogEntryClaimList,
-		DeepCopy_catalog_CatalogEntryClaimSpec,
-		DeepCopy_catalog_CatalogEntryClaimStatus,
 		DeepCopy_catalog_CatalogEntryList,
 		DeepCopy_catalog_CatalogList,
 	); err != nil {
@@ -59,81 +55,8 @@ func DeepCopy_catalog_CatalogEntry(in CatalogEntry, out *CatalogEntry, c *conver
 	if err := api.DeepCopy_api_ObjectMeta(in.ObjectMeta, &out.ObjectMeta, c); err != nil {
 		return err
 	}
-	if err := api.DeepCopy_api_LocalObjectReference(in.Catalog, &out.Catalog, c); err != nil {
-		return err
-	}
-	out.Description = in.Description
-	if err := api.DeepCopy_api_ObjectReference(in.Reference, &out.Reference, c); err != nil {
-		return err
-	}
-	if in.Data != nil {
-		in, out := in.Data, &out.Data
-		*out = make(map[string]string)
-		for key, val := range in {
-			(*out)[key] = val
-		}
-	} else {
-		out.Data = nil
-	}
-	return nil
-}
-
-func DeepCopy_catalog_CatalogEntryClaim(in CatalogEntryClaim, out *CatalogEntryClaim, c *conversion.Cloner) error {
-	if err := unversioned.DeepCopy_unversioned_TypeMeta(in.TypeMeta, &out.TypeMeta, c); err != nil {
-		return err
-	}
-	if err := api.DeepCopy_api_ObjectMeta(in.ObjectMeta, &out.ObjectMeta, c); err != nil {
-		return err
-	}
-	if err := DeepCopy_catalog_CatalogEntryClaimSpec(in.Spec, &out.Spec, c); err != nil {
-		return err
-	}
-	if err := DeepCopy_catalog_CatalogEntryClaimStatus(in.Status, &out.Status, c); err != nil {
-		return err
-	}
-	return nil
-}
-
-func DeepCopy_catalog_CatalogEntryClaimList(in CatalogEntryClaimList, out *CatalogEntryClaimList, c *conversion.Cloner) error {
-	if err := unversioned.DeepCopy_unversioned_TypeMeta(in.TypeMeta, &out.TypeMeta, c); err != nil {
-		return err
-	}
-	if err := unversioned.DeepCopy_unversioned_ListMeta(in.ListMeta, &out.ListMeta, c); err != nil {
-		return err
-	}
-	if in.Items != nil {
-		in, out := in.Items, &out.Items
-		*out = make([]CatalogEntryClaim, len(in))
-		for i := range in {
-			if err := DeepCopy_catalog_CatalogEntryClaim(in[i], &(*out)[i], c); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.Items = nil
-	}
-	return nil
-}
-
-func DeepCopy_catalog_CatalogEntryClaimSpec(in CatalogEntryClaimSpec, out *CatalogEntryClaimSpec, c *conversion.Cloner) error {
 	out.Catalog = in.Catalog
-	out.Entry = in.Entry
-	return nil
-}
-
-func DeepCopy_catalog_CatalogEntryClaimStatus(in CatalogEntryClaimStatus, out *CatalogEntryClaimStatus, c *conversion.Cloner) error {
-	out.State = in.State
-	if in.ProvisionedItems != nil {
-		in, out := in.ProvisionedItems, &out.ProvisionedItems
-		*out = make([]api.ObjectReference, len(in))
-		for i := range in {
-			if err := api.DeepCopy_api_ObjectReference(in[i], &(*out)[i], c); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.ProvisionedItems = nil
-	}
+	out.Description = in.Description
 	return nil
 }
 

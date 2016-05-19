@@ -21,7 +21,6 @@ syntax = 'proto2';
 
 package k8s.io.kubernetes.pkg.apis.catalog.v1alpha1;
 
-import "k8s.io/kubernetes/pkg/api/resource/generated.proto";
 import "k8s.io/kubernetes/pkg/api/unversioned/generated.proto";
 import "k8s.io/kubernetes/pkg/api/v1/generated.proto";
 import "k8s.io/kubernetes/pkg/util/intstr/generated.proto";
@@ -36,39 +35,9 @@ message Catalog {
 message CatalogEntry {
   optional k8s.io.kubernetes.pkg.api.v1.ObjectMeta metadata = 1;
 
-  optional k8s.io.kubernetes.pkg.api.v1.LocalObjectReference catalog = 2;
+  optional string catalog = 4;
 
   optional string description = 3;
-
-  optional k8s.io.kubernetes.pkg.api.v1.ObjectReference reference = 4;
-
-  map<string, string> data = 5;
-}
-
-message CatalogEntryClaim {
-  optional k8s.io.kubernetes.pkg.api.v1.ObjectMeta metadata = 1;
-
-  optional CatalogEntryClaimSpec spec = 2;
-
-  optional CatalogEntryClaimStatus status = 3;
-}
-
-message CatalogEntryClaimList {
-  optional k8s.io.kubernetes.pkg.api.unversioned.ListMeta metadata = 1;
-
-  repeated CatalogEntryClaim items = 2;
-}
-
-message CatalogEntryClaimSpec {
-  optional string catalog = 1;
-
-  optional string entry = 2;
-}
-
-message CatalogEntryClaimStatus {
-  optional string state = 1;
-
-  repeated k8s.io.kubernetes.pkg.api.v1.ObjectReference provisionedItems = 2;
 }
 
 message CatalogEntryList {

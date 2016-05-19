@@ -22,7 +22,6 @@ package v1alpha1
 
 import (
 	api "k8s.io/kubernetes/pkg/api"
-	v1 "k8s.io/kubernetes/pkg/api/v1"
 	catalog "k8s.io/kubernetes/pkg/apis/catalog"
 	conversion "k8s.io/kubernetes/pkg/conversion"
 )
@@ -33,14 +32,6 @@ func init() {
 		Convert_catalog_Catalog_To_v1alpha1_Catalog,
 		Convert_v1alpha1_CatalogEntry_To_catalog_CatalogEntry,
 		Convert_catalog_CatalogEntry_To_v1alpha1_CatalogEntry,
-		Convert_v1alpha1_CatalogEntryClaim_To_catalog_CatalogEntryClaim,
-		Convert_catalog_CatalogEntryClaim_To_v1alpha1_CatalogEntryClaim,
-		Convert_v1alpha1_CatalogEntryClaimList_To_catalog_CatalogEntryClaimList,
-		Convert_catalog_CatalogEntryClaimList_To_v1alpha1_CatalogEntryClaimList,
-		Convert_v1alpha1_CatalogEntryClaimSpec_To_catalog_CatalogEntryClaimSpec,
-		Convert_catalog_CatalogEntryClaimSpec_To_v1alpha1_CatalogEntryClaimSpec,
-		Convert_v1alpha1_CatalogEntryClaimStatus_To_catalog_CatalogEntryClaimStatus,
-		Convert_catalog_CatalogEntryClaimStatus_To_v1alpha1_CatalogEntryClaimStatus,
 		Convert_v1alpha1_CatalogEntryList_To_catalog_CatalogEntryList,
 		Convert_catalog_CatalogEntryList_To_v1alpha1_CatalogEntryList,
 		Convert_v1alpha1_CatalogList_To_catalog_CatalogList,
@@ -89,24 +80,8 @@ func autoConvert_v1alpha1_CatalogEntry_To_catalog_CatalogEntry(in *CatalogEntry,
 	if err := s.Convert(&in.ObjectMeta, &out.ObjectMeta, 0); err != nil {
 		return err
 	}
-	// TODO: Inefficient conversion - can we improve it?
-	if err := s.Convert(&in.Catalog, &out.Catalog, 0); err != nil {
-		return err
-	}
+	out.Catalog = in.Catalog
 	out.Description = in.Description
-	// TODO: Inefficient conversion - can we improve it?
-	if err := s.Convert(&in.Reference, &out.Reference, 0); err != nil {
-		return err
-	}
-	if in.Data != nil {
-		in, out := &in.Data, &out.Data
-		*out = make(map[string]string, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	} else {
-		out.Data = nil
-	}
 	return nil
 }
 
@@ -122,183 +97,13 @@ func autoConvert_catalog_CatalogEntry_To_v1alpha1_CatalogEntry(in *catalog.Catal
 	if err := s.Convert(&in.ObjectMeta, &out.ObjectMeta, 0); err != nil {
 		return err
 	}
-	// TODO: Inefficient conversion - can we improve it?
-	if err := s.Convert(&in.Catalog, &out.Catalog, 0); err != nil {
-		return err
-	}
+	out.Catalog = in.Catalog
 	out.Description = in.Description
-	// TODO: Inefficient conversion - can we improve it?
-	if err := s.Convert(&in.Reference, &out.Reference, 0); err != nil {
-		return err
-	}
-	if in.Data != nil {
-		in, out := &in.Data, &out.Data
-		*out = make(map[string]string, len(*in))
-		for key, val := range *in {
-			(*out)[key] = val
-		}
-	} else {
-		out.Data = nil
-	}
 	return nil
 }
 
 func Convert_catalog_CatalogEntry_To_v1alpha1_CatalogEntry(in *catalog.CatalogEntry, out *CatalogEntry, s conversion.Scope) error {
 	return autoConvert_catalog_CatalogEntry_To_v1alpha1_CatalogEntry(in, out, s)
-}
-
-func autoConvert_v1alpha1_CatalogEntryClaim_To_catalog_CatalogEntryClaim(in *CatalogEntryClaim, out *catalog.CatalogEntryClaim, s conversion.Scope) error {
-	if err := api.Convert_unversioned_TypeMeta_To_unversioned_TypeMeta(&in.TypeMeta, &out.TypeMeta, s); err != nil {
-		return err
-	}
-	// TODO: Inefficient conversion - can we improve it?
-	if err := s.Convert(&in.ObjectMeta, &out.ObjectMeta, 0); err != nil {
-		return err
-	}
-	if err := Convert_v1alpha1_CatalogEntryClaimSpec_To_catalog_CatalogEntryClaimSpec(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
-	if err := Convert_v1alpha1_CatalogEntryClaimStatus_To_catalog_CatalogEntryClaimStatus(&in.Status, &out.Status, s); err != nil {
-		return err
-	}
-	return nil
-}
-
-func Convert_v1alpha1_CatalogEntryClaim_To_catalog_CatalogEntryClaim(in *CatalogEntryClaim, out *catalog.CatalogEntryClaim, s conversion.Scope) error {
-	return autoConvert_v1alpha1_CatalogEntryClaim_To_catalog_CatalogEntryClaim(in, out, s)
-}
-
-func autoConvert_catalog_CatalogEntryClaim_To_v1alpha1_CatalogEntryClaim(in *catalog.CatalogEntryClaim, out *CatalogEntryClaim, s conversion.Scope) error {
-	if err := api.Convert_unversioned_TypeMeta_To_unversioned_TypeMeta(&in.TypeMeta, &out.TypeMeta, s); err != nil {
-		return err
-	}
-	// TODO: Inefficient conversion - can we improve it?
-	if err := s.Convert(&in.ObjectMeta, &out.ObjectMeta, 0); err != nil {
-		return err
-	}
-	if err := Convert_catalog_CatalogEntryClaimSpec_To_v1alpha1_CatalogEntryClaimSpec(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
-	if err := Convert_catalog_CatalogEntryClaimStatus_To_v1alpha1_CatalogEntryClaimStatus(&in.Status, &out.Status, s); err != nil {
-		return err
-	}
-	return nil
-}
-
-func Convert_catalog_CatalogEntryClaim_To_v1alpha1_CatalogEntryClaim(in *catalog.CatalogEntryClaim, out *CatalogEntryClaim, s conversion.Scope) error {
-	return autoConvert_catalog_CatalogEntryClaim_To_v1alpha1_CatalogEntryClaim(in, out, s)
-}
-
-func autoConvert_v1alpha1_CatalogEntryClaimList_To_catalog_CatalogEntryClaimList(in *CatalogEntryClaimList, out *catalog.CatalogEntryClaimList, s conversion.Scope) error {
-	if err := api.Convert_unversioned_TypeMeta_To_unversioned_TypeMeta(&in.TypeMeta, &out.TypeMeta, s); err != nil {
-		return err
-	}
-	if err := api.Convert_unversioned_ListMeta_To_unversioned_ListMeta(&in.ListMeta, &out.ListMeta, s); err != nil {
-		return err
-	}
-	if in.Items != nil {
-		in, out := &in.Items, &out.Items
-		*out = make([]catalog.CatalogEntryClaim, len(*in))
-		for i := range *in {
-			if err := Convert_v1alpha1_CatalogEntryClaim_To_catalog_CatalogEntryClaim(&(*in)[i], &(*out)[i], s); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.Items = nil
-	}
-	return nil
-}
-
-func Convert_v1alpha1_CatalogEntryClaimList_To_catalog_CatalogEntryClaimList(in *CatalogEntryClaimList, out *catalog.CatalogEntryClaimList, s conversion.Scope) error {
-	return autoConvert_v1alpha1_CatalogEntryClaimList_To_catalog_CatalogEntryClaimList(in, out, s)
-}
-
-func autoConvert_catalog_CatalogEntryClaimList_To_v1alpha1_CatalogEntryClaimList(in *catalog.CatalogEntryClaimList, out *CatalogEntryClaimList, s conversion.Scope) error {
-	if err := api.Convert_unversioned_TypeMeta_To_unversioned_TypeMeta(&in.TypeMeta, &out.TypeMeta, s); err != nil {
-		return err
-	}
-	if err := api.Convert_unversioned_ListMeta_To_unversioned_ListMeta(&in.ListMeta, &out.ListMeta, s); err != nil {
-		return err
-	}
-	if in.Items != nil {
-		in, out := &in.Items, &out.Items
-		*out = make([]CatalogEntryClaim, len(*in))
-		for i := range *in {
-			if err := Convert_catalog_CatalogEntryClaim_To_v1alpha1_CatalogEntryClaim(&(*in)[i], &(*out)[i], s); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.Items = nil
-	}
-	return nil
-}
-
-func Convert_catalog_CatalogEntryClaimList_To_v1alpha1_CatalogEntryClaimList(in *catalog.CatalogEntryClaimList, out *CatalogEntryClaimList, s conversion.Scope) error {
-	return autoConvert_catalog_CatalogEntryClaimList_To_v1alpha1_CatalogEntryClaimList(in, out, s)
-}
-
-func autoConvert_v1alpha1_CatalogEntryClaimSpec_To_catalog_CatalogEntryClaimSpec(in *CatalogEntryClaimSpec, out *catalog.CatalogEntryClaimSpec, s conversion.Scope) error {
-	out.Catalog = in.Catalog
-	out.Entry = in.Entry
-	return nil
-}
-
-func Convert_v1alpha1_CatalogEntryClaimSpec_To_catalog_CatalogEntryClaimSpec(in *CatalogEntryClaimSpec, out *catalog.CatalogEntryClaimSpec, s conversion.Scope) error {
-	return autoConvert_v1alpha1_CatalogEntryClaimSpec_To_catalog_CatalogEntryClaimSpec(in, out, s)
-}
-
-func autoConvert_catalog_CatalogEntryClaimSpec_To_v1alpha1_CatalogEntryClaimSpec(in *catalog.CatalogEntryClaimSpec, out *CatalogEntryClaimSpec, s conversion.Scope) error {
-	out.Catalog = in.Catalog
-	out.Entry = in.Entry
-	return nil
-}
-
-func Convert_catalog_CatalogEntryClaimSpec_To_v1alpha1_CatalogEntryClaimSpec(in *catalog.CatalogEntryClaimSpec, out *CatalogEntryClaimSpec, s conversion.Scope) error {
-	return autoConvert_catalog_CatalogEntryClaimSpec_To_v1alpha1_CatalogEntryClaimSpec(in, out, s)
-}
-
-func autoConvert_v1alpha1_CatalogEntryClaimStatus_To_catalog_CatalogEntryClaimStatus(in *CatalogEntryClaimStatus, out *catalog.CatalogEntryClaimStatus, s conversion.Scope) error {
-	out.State = catalog.CatalogEntryClaimState(in.State)
-	if in.ProvisionedItems != nil {
-		in, out := &in.ProvisionedItems, &out.ProvisionedItems
-		*out = make([]api.ObjectReference, len(*in))
-		for i := range *in {
-			// TODO: Inefficient conversion - can we improve it?
-			if err := s.Convert(&(*in)[i], &(*out)[i], 0); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.ProvisionedItems = nil
-	}
-	return nil
-}
-
-func Convert_v1alpha1_CatalogEntryClaimStatus_To_catalog_CatalogEntryClaimStatus(in *CatalogEntryClaimStatus, out *catalog.CatalogEntryClaimStatus, s conversion.Scope) error {
-	return autoConvert_v1alpha1_CatalogEntryClaimStatus_To_catalog_CatalogEntryClaimStatus(in, out, s)
-}
-
-func autoConvert_catalog_CatalogEntryClaimStatus_To_v1alpha1_CatalogEntryClaimStatus(in *catalog.CatalogEntryClaimStatus, out *CatalogEntryClaimStatus, s conversion.Scope) error {
-	out.State = CatalogEntryClaimState(in.State)
-	if in.ProvisionedItems != nil {
-		in, out := &in.ProvisionedItems, &out.ProvisionedItems
-		*out = make([]v1.ObjectReference, len(*in))
-		for i := range *in {
-			// TODO: Inefficient conversion - can we improve it?
-			if err := s.Convert(&(*in)[i], &(*out)[i], 0); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.ProvisionedItems = nil
-	}
-	return nil
-}
-
-func Convert_catalog_CatalogEntryClaimStatus_To_v1alpha1_CatalogEntryClaimStatus(in *catalog.CatalogEntryClaimStatus, out *CatalogEntryClaimStatus, s conversion.Scope) error {
-	return autoConvert_catalog_CatalogEntryClaimStatus_To_v1alpha1_CatalogEntryClaimStatus(in, out, s)
 }
 
 func autoConvert_v1alpha1_CatalogEntryList_To_catalog_CatalogEntryList(in *CatalogEntryList, out *catalog.CatalogEntryList, s conversion.Scope) error {
