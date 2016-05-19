@@ -28,6 +28,7 @@ import (
 	"k8s.io/kubernetes/pkg/apis/catalog"
 	"k8s.io/kubernetes/pkg/genericapiserver"
 	catalogetcd "k8s.io/kubernetes/pkg/registry/catalog/etcd"
+	catalogentryetcd "k8s.io/kubernetes/pkg/registry/catalogentry/etcd"
 	"k8s.io/kubernetes/pkg/registry/generic"
 	"k8s.io/kubernetes/pkg/storage/storagebackend"
 
@@ -69,8 +70,10 @@ func Run(s *options.APIServer) error {
 	}
 
 	catalogStorage := catalogetcd.NewREST(restOptions)
+	catalogEntryStorage := catalogentryetcd.NewREST(restOptions)
 	restStorageMap := map[string]rest.Storage{
-		"catalogs": catalogStorage,
+		"catalogs":       catalogStorage,
+		"catalogentries": catalogEntryStorage,
 	}
 
 	// Create API Group
