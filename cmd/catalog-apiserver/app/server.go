@@ -20,19 +20,28 @@ limitations under the License.
 package app
 
 import (
+	"time"
+
+	"github.com/golang/glog"
 	"k8s.io/kubernetes/cmd/catalog-apiserver/app/options"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/rest"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/apimachinery/registered"
-	"k8s.io/kubernetes/pkg/apis/catalog"
+	"k8s.io/kubernetes/pkg/client/cache"
+	clientset "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
+	"k8s.io/kubernetes/pkg/client/restclient"
+	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
+	"k8s.io/kubernetes/pkg/controller/catalogentry"
 	"k8s.io/kubernetes/pkg/genericapiserver"
 	catalogetcd "k8s.io/kubernetes/pkg/registry/catalog/etcd"
-	catalogentryetcd "k8s.io/kubernetes/pkg/registry/catalogentry/etcd"
+	"k8s.io/kubernetes/pkg/registry/catalogentry"
 	"k8s.io/kubernetes/pkg/registry/generic"
 	"k8s.io/kubernetes/pkg/storage/storagebackend"
+	"k8s.io/kubernetes/pkg/util/wait"
 
-	_ "k8s.io/kubernetes/pkg/apis/catalog/install"
+	"k8s.io/kubernetes/pkg/apis/servicecatalog"
+	_ "k8s.io/kubernetes/pkg/apis/servicecatalog/install"
 )
 
 // Run runs the specified APIServer.  This should never exit.
@@ -70,10 +79,18 @@ func Run(s *options.APIServer) error {
 	}
 
 	catalogStorage := catalogetcd.NewREST(restOptions)
-	catalogEntryStorage := catalogentryetcd.NewREST(restOptions)
+	catalogPostingStorage := catalopostingetcd.NewREST(restOptions)
+
+	catalogEntryCache := cache.NewStore(func(obj interface{}) (string, error) {
+		e, ok := obj.(*servicecatalog.CatalogEntry)
+		return "", nil
+	})
+	catalogEntryStorage := catalogentry.NewREST()
+
 	restStorageMap := map[string]rest.Storage{
-		"catalogs":       catalogStorage,
-		"catalogentries": catalogEntryStorage,
+		"catalogs":        catalogStorage,
+		"catalogentries":  catalogEntryStorage,
+		"catalogpostings": catalogPostingStorage,
 	}
 
 	// Create API Group
@@ -95,5 +112,17 @@ func Run(s *options.APIServer) error {
 	}
 
 	m.Run(s.ServerRunOptions)
+
+	glog.Infof("Starting catalog entry controller")
+	kubeconfig, err := clientcmd.BuildConfigFromFlags("http://localhost:8081", "/home/vagrant/.kube/config")
+	if err != nil {
+		return err
+	}
+	catalogEntryControllerKubeClient := clientset.NewForConfigOrDie(restclient.AddUserAgent(kubeconfig, "catalogentry-controller"))
+	catalogEntryControllerResync := func() time.Duration {
+		return 10 * time.Minute
+	}
+	go catalogentry.NewController(catalogEntryControllerKubeClient, catalogEntryControllerResync).Run(wait.NeverStop)
+
 	return nil
 }

@@ -2,7 +2,7 @@ package etcd
 
 import (
 	"k8s.io/kubernetes/pkg/api"
-	catalogapi "k8s.io/kubernetes/pkg/apis/catalog"
+	catalogapi "k8s.io/kubernetes/pkg/apis/servicecatalog"
 	"k8s.io/kubernetes/pkg/fields"
 	"k8s.io/kubernetes/pkg/labels"
 	"k8s.io/kubernetes/pkg/registry/catalog"

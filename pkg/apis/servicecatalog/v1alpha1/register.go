@@ -29,13 +29,21 @@ func addKnownTypes(scheme *runtime.Scheme) {
 		&CatalogList{},
 		&CatalogEntry{},
 		&CatalogEntryList{},
+		&CatalogPosting{},
+		&CatalogPostingList{},
+		&CatalogClaim{},
+		&CatalogClaimList{},
 		&v1.ListOptions{},
 		&v1.DeleteOptions{},
 	)
 	versionedwatch.AddToGroupVersion(scheme, SchemeGroupVersion)
 }
 
-func (obj *Catalog) GetObjectKind() unversioned.ObjectKind          { return &obj.TypeMeta }
-func (obj *CatalogList) GetObjectKind() unversioned.ObjectKind      { return &obj.TypeMeta }
-func (obj *CatalogEntry) GetObjectKind() unversioned.ObjectKind     { return &obj.TypeMeta }
-func (obj *CatalogEntryList) GetObjectKind() unversioned.ObjectKind { return &obj.TypeMeta }
+func (obj *Catalog) GetObjectKind() unversioned.ObjectKind            { return &obj.TypeMeta }
+func (obj *CatalogList) GetObjectKind() unversioned.ObjectKind        { return &obj.TypeMeta }
+func (obj *CatalogEntry) GetObjectKind() unversioned.ObjectKind       { return &obj.TypeMeta }
+func (obj *CatalogEntryList) GetObjectKind() unversioned.ObjectKind   { return &obj.TypeMeta }
+func (obj *CatalogPosting) GetObjectKind() unversioned.ObjectKind     { return &obj.TypeMeta }
+func (obj *CatalogPostingList) GetObjectKind() unversioned.ObjectKind { return &obj.TypeMeta }
+func (obj *CatalogClaim) GetObjectKind() unversioned.ObjectKind       { return &obj.TypeMeta }
+func (obj *CatalogClaimList) GetObjectKind() unversioned.ObjectKind   { return &obj.TypeMeta }

@@ -23,6 +23,7 @@ import (
 	unversionedcore "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset/typed/core/unversioned"
 	unversionedextensions "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset/typed/extensions/unversioned"
 	unversionedrbac "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset/typed/rbac/unversioned"
+	unversionedservicecatalog "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset/typed/servicecatalog/unversioned"
 	restclient "k8s.io/kubernetes/pkg/client/restclient"
 	discovery "k8s.io/kubernetes/pkg/client/typed/discovery"
 	"k8s.io/kubernetes/pkg/util/flowcontrol"
@@ -35,6 +36,7 @@ type Interface interface {
 	Autoscaling() unversionedautoscaling.AutoscalingInterface
 	Batch() unversionedbatch.BatchInterface
 	Rbac() unversionedrbac.RbacInterface
+	Servicecatalog() unversionedservicecatalog.ServicecatalogInterface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
@@ -46,6 +48,7 @@ type Clientset struct {
 	*unversionedautoscaling.AutoscalingClient
 	*unversionedbatch.BatchClient
 	*unversionedrbac.RbacClient
+	*unversionedservicecatalog.ServicecatalogClient
 }
 
 // Core retrieves the CoreClient
@@ -88,6 +91,14 @@ func (c *Clientset) Rbac() unversionedrbac.RbacInterface {
 	return c.RbacClient
 }
 
+// Servicecatalog retrieves the ServicecatalogClient
+func (c *Clientset) Servicecatalog() unversionedservicecatalog.ServicecatalogInterface {
+	if c == nil {
+		return nil
+	}
+	return c.ServicecatalogClient
+}
+
 // Discovery retrieves the DiscoveryClient
 func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 	return c.DiscoveryClient
@@ -121,6 +132,10 @@ func NewForConfig(c *restclient.Config) (*Clientset, error) {
 	if err != nil {
 		return &clientset, err
 	}
+	clientset.ServicecatalogClient, err = unversionedservicecatalog.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return &clientset, err
+	}
 
 	clientset.DiscoveryClient, err = discovery.NewDiscoveryClientForConfig(&configShallowCopy)
 	if err != nil {
@@ -138,6 +153,7 @@ func NewForConfigOrDie(c *restclient.Config) *Clientset {
 	clientset.AutoscalingClient = unversionedautoscaling.NewForConfigOrDie(c)
 	clientset.BatchClient = unversionedbatch.NewForConfigOrDie(c)
 	clientset.RbacClient = unversionedrbac.NewForConfigOrDie(c)
+	clientset.ServicecatalogClient = unversionedservicecatalog.NewForConfigOrDie(c)
 
 	clientset.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &clientset
@@ -151,6 +167,7 @@ func New(c *restclient.RESTClient) *Clientset {
 	clientset.AutoscalingClient = unversionedautoscaling.New(c)
 	clientset.BatchClient = unversionedbatch.New(c)
 	clientset.RbacClient = unversionedrbac.New(c)
+	clientset.ServicecatalogClient = unversionedservicecatalog.New(c)
 
 	clientset.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &clientset

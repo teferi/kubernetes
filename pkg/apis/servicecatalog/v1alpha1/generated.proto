@@ -19,7 +19,7 @@ limitations under the License.
 
 syntax = 'proto2';
 
-package k8s.io.kubernetes.pkg.apis.catalog.v1alpha1;
+package k8s.io.kubernetes.pkg.apis.servicecatalog.v1alpha1;
 
 import "k8s.io/kubernetes/pkg/api/unversioned/generated.proto";
 import "k8s.io/kubernetes/pkg/api/v1/generated.proto";
@@ -32,12 +32,42 @@ message Catalog {
   optional k8s.io.kubernetes.pkg.api.v1.ObjectMeta metadata = 1;
 }
 
+message CatalogClaim {
+  optional k8s.io.kubernetes.pkg.api.v1.ObjectMeta metadata = 1;
+
+  optional CatalogClaimSpec spec = 2;
+
+  optional CatalogClaimStatus status = 3;
+}
+
+message CatalogClaimList {
+  optional k8s.io.kubernetes.pkg.api.unversioned.ListMeta metadata = 1;
+
+  repeated CatalogClaim items = 2;
+}
+
+message CatalogClaimSpec {
+  optional string catalog = 1;
+
+  optional string entry = 2;
+}
+
+message CatalogClaimStatus {
+  optional string state = 1;
+
+  repeated k8s.io.kubernetes.pkg.api.v1.ObjectReference createdResources = 2;
+}
+
 message CatalogEntry {
   optional k8s.io.kubernetes.pkg.api.v1.ObjectMeta metadata = 1;
 
   optional string catalog = 4;
 
   optional string description = 3;
+
+  optional string sourceNamespace = 5;
+
+  repeated k8s.io.kubernetes.pkg.api.v1.ObjectReference output = 6;
 }
 
 message CatalogEntryList {
@@ -50,5 +80,21 @@ message CatalogList {
   optional k8s.io.kubernetes.pkg.api.unversioned.ListMeta metadata = 1;
 
   repeated Catalog items = 2;
+}
+
+message CatalogPosting {
+  optional k8s.io.kubernetes.pkg.api.v1.ObjectMeta metadata = 1;
+
+  optional string catalog = 2;
+
+  optional string description = 3;
+
+  map<string, string> data = 4;
+}
+
+message CatalogPostingList {
+  optional k8s.io.kubernetes.pkg.api.unversioned.ListMeta metadata = 1;
+
+  repeated CatalogPosting items = 2;
 }
 

@@ -10,13 +10,12 @@ import (
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/apimachinery"
 	"k8s.io/kubernetes/pkg/apimachinery/registered"
-	"k8s.io/kubernetes/pkg/apis/catalog"
-	"k8s.io/kubernetes/pkg/apis/catalog/v1alpha1"
+	"k8s.io/kubernetes/pkg/apis/servicecatalog/v1alpha1"
 	"k8s.io/kubernetes/pkg/runtime"
 	"k8s.io/kubernetes/pkg/util/sets"
 )
 
-const importPrefix = "k8s.io/kubernetes/pkg/apis/catalog"
+const importPrefix = "k8s.io/kubernetes/pkg/apis/servicecatalog"
 
 var accessor = meta.NewAccessor()
 
