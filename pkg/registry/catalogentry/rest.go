@@ -2,6 +2,7 @@ package catalogentry
 
 import (
 	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/apis/servicecatalog"
 	"k8s.io/kubernetes/pkg/client/cache"
 	"k8s.io/kubernetes/pkg/runtime"
 )
@@ -15,11 +16,11 @@ func NewREST(catalogEntryCache cache.Store) *catalogEntryREST {
 }
 
 func (r *catalogEntryREST) New() runtime.Object {
-	return nil
+	return &servicecatalog.CatalogEntry{}
 }
 
 func (r *catalogEntryREST) NewList() runtime.Object {
-	return nil
+	return &servicecatalog.CatalogEntryList{}
 }
 
 func (r *catalogEntryREST) List(ctx api.Context, options *api.ListOptions) (runtime.Object, error) {
@@ -28,6 +29,6 @@ func (r *catalogEntryREST) List(ctx api.Context, options *api.ListOptions) (runt
 	// kubectl get --namespace finance catalogentries/oracle
 	// kubectl get catalogentries/finance/oracle <-- does not work
 	//r.catalogEntryCache.Get(<namemspace>)
-	return nil, nil
+	return &servicecatalog.CatalogEntryList{}, nil
 
 }
