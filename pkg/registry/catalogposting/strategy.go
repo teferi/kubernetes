@@ -61,7 +61,7 @@ func CatalogPostingToSelectableFields(catalog *catalogapi.CatalogPosting) fields
 // MatchCatalog is the filter used by the generic etcd backend to route
 // watch events from etcd to clients of the apiserver only interested in specific
 // labels/fields.
-func MatchCatalog(label labels.Selector, field fields.Selector) generic.Matcher {
+func MatchCatalogPosting(label labels.Selector, field fields.Selector) generic.Matcher {
 	return &generic.SelectionPredicate{
 		Label: label,
 		Field: field,
@@ -70,7 +70,7 @@ func MatchCatalog(label labels.Selector, field fields.Selector) generic.Matcher 
 			if !ok {
 				return nil, nil, fmt.Errorf("Given object is not a catalog posting.")
 			}
-			return labels.Set(catalog.ObjectMeta.Labels), CatalogPostingToSelectableFields(catalogPosting), nil
+			return labels.Set(catalogPosting.Labels), CatalogPostingToSelectableFields(catalogPosting), nil
 		},
 	}
 }

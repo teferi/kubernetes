@@ -94,6 +94,7 @@ func DeepCopy_servicecatalog_CatalogClaimList(in CatalogClaimList, out *CatalogC
 func DeepCopy_servicecatalog_CatalogClaimSpec(in CatalogClaimSpec, out *CatalogClaimSpec, c *conversion.Cloner) error {
 	out.Catalog = in.Catalog
 	out.Entry = in.Entry
+	out.ResourcePrefix = in.ResourcePrefix
 	return nil
 }
 
@@ -190,9 +191,13 @@ func DeepCopy_servicecatalog_CatalogPosting(in CatalogPosting, out *CatalogPosti
 	out.Description = in.Description
 	if in.Data != nil {
 		in, out := in.Data, &out.Data
-		*out = make(map[string]string)
+		*out = make(map[string]interface{})
 		for key, val := range in {
-			(*out)[key] = val
+			if newVal, err := c.DeepCopy(val); err != nil {
+				return err
+			} else {
+				(*out)[key] = newVal.(interface{})
+			}
 		}
 	} else {
 		out.Data = nil

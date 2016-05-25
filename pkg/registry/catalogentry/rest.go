@@ -10,13 +10,16 @@ type catalogEntryREST struct {
 	catalogEntryCache cache.Store
 }
 
-func NewREST(catalogEntryCache cache.Store) {
+func NewREST(catalogEntryCache cache.Store) *catalogEntryREST {
+	return &catalogEntryREST{}
 }
 
 func (r *catalogEntryREST) New() runtime.Object {
+	return nil
 }
 
 func (r *catalogEntryREST) NewList() runtime.Object {
+	return nil
 }
 
 func (r *catalogEntryREST) List(ctx api.Context, options *api.ListOptions) (runtime.Object, error) {
@@ -25,5 +28,6 @@ func (r *catalogEntryREST) List(ctx api.Context, options *api.ListOptions) (runt
 	// kubectl get --namespace finance catalogentries/oracle
 	// kubectl get catalogentries/finance/oracle <-- does not work
 	//r.catalogEntryCache.Get(<namemspace>)
+	return nil, nil
 
 }

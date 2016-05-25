@@ -7,7 +7,7 @@ import (
 	versionedwatch "k8s.io/kubernetes/pkg/watch/versioned"
 )
 
-const GroupName = "catalog"
+const GroupName = "servicecatalog"
 
 // SchemeGroupVersion is group version used to register these objects
 var SchemeGroupVersion = unversioned.GroupVersion{Group: GroupName, Version: "v1alpha1"}

@@ -28,19 +28,19 @@ import (
 	"k8s.io/kubernetes/pkg/api/rest"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/apimachinery/registered"
+	"k8s.io/kubernetes/pkg/apis/servicecatalog"
 	"k8s.io/kubernetes/pkg/client/cache"
 	clientset "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
-	"k8s.io/kubernetes/pkg/client/restclient"
 	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
-	"k8s.io/kubernetes/pkg/controller/catalogentry"
+	catalogentryctrl "k8s.io/kubernetes/pkg/controller/catalogentry"
 	"k8s.io/kubernetes/pkg/genericapiserver"
 	catalogetcd "k8s.io/kubernetes/pkg/registry/catalog/etcd"
 	"k8s.io/kubernetes/pkg/registry/catalogentry"
+	catalogpostingetcd "k8s.io/kubernetes/pkg/registry/catalogposting/etcd"
 	"k8s.io/kubernetes/pkg/registry/generic"
 	"k8s.io/kubernetes/pkg/storage/storagebackend"
 	"k8s.io/kubernetes/pkg/util/wait"
 
-	"k8s.io/kubernetes/pkg/apis/servicecatalog"
 	_ "k8s.io/kubernetes/pkg/apis/servicecatalog/install"
 )
 
@@ -67,25 +67,24 @@ func Run(s *options.APIServer) error {
 		ServerList: s.ServerRunOptions.StorageConfig.ServerList,
 	}
 	storageFactory := genericapiserver.NewDefaultStorageFactory(config, "application/json", api.Codecs, genericapiserver.NewDefaultResourceEncodingConfig(), genericapiserver.NewResourceConfig())
-	storage, err := storageFactory.New(unversioned.GroupResource{Group: catalog.GroupName, Resource: "catalog"})
+
+	storage, err := storageFactory.New(unversioned.GroupResource{Group: servicecatalog.GroupName, Resource: "catalog"})
 	if err != nil {
 		return err
 	}
-
 	restOptions := generic.RESTOptions{
 		Storage:                 storage,
 		Decorator:               m.StorageDecorator(),
 		DeleteCollectionWorkers: s.DeleteCollectionWorkers,
 	}
-
 	catalogStorage := catalogetcd.NewREST(restOptions)
-	catalogPostingStorage := catalopostingetcd.NewREST(restOptions)
+	catalogPostingStorage := catalogpostingetcd.NewREST(restOptions)
 
 	catalogEntryCache := cache.NewStore(func(obj interface{}) (string, error) {
-		e, ok := obj.(*servicecatalog.CatalogEntry)
+		//e, ok := obj.(*servicecatalog.CatalogEntry)
 		return "", nil
 	})
-	catalogEntryStorage := catalogentry.NewREST()
+	catalogEntryStorage := catalogentry.NewREST(catalogEntryCache)
 
 	restStorageMap := map[string]rest.Storage{
 		"catalogs":        catalogStorage,
@@ -94,8 +93,8 @@ func Run(s *options.APIServer) error {
 	}
 
 	// Create API Group
-	catalogGroupMeta := registered.GroupOrDie(catalog.GroupName)
-	catalogGroupMeta.GroupVersion = unversioned.GroupVersion{Group: "catalog", Version: "v1alpha1"}
+	catalogGroupMeta := registered.GroupOrDie(servicecatalog.GroupName)
+	catalogGroupMeta.GroupVersion = unversioned.GroupVersion{Group: servicecatalog.GroupName, Version: "v1alpha1"}
 	apiGroupInfo := &genericapiserver.APIGroupInfo{
 		GroupMeta: *catalogGroupMeta,
 		VersionedResourcesStorageMap: map[string]map[string]rest.Storage{
@@ -114,15 +113,15 @@ func Run(s *options.APIServer) error {
 	m.Run(s.ServerRunOptions)
 
 	glog.Infof("Starting catalog entry controller")
-	kubeconfig, err := clientcmd.BuildConfigFromFlags("http://localhost:8081", "/home/vagrant/.kube/config")
+	kubeconfig, err := clientcmd.DefaultClientConfig.ClientConfig()
 	if err != nil {
 		return err
 	}
-	catalogEntryControllerKubeClient := clientset.NewForConfigOrDie(restclient.AddUserAgent(kubeconfig, "catalogentry-controller"))
+	catalogEntryControllerKubeClient := clientset.NewForConfigOrDie(kubeconfig)
 	catalogEntryControllerResync := func() time.Duration {
 		return 10 * time.Minute
 	}
-	go catalogentry.NewController(catalogEntryControllerKubeClient, catalogEntryControllerResync).Run(wait.NeverStop)
+	go catalogentryctrl.NewController(catalogEntryControllerKubeClient, catalogEntryControllerResync, catalogEntryCache).Run(wait.NeverStop)
 
 	return nil
 }

@@ -18,7 +18,7 @@ type REST struct {
 
 // NewREST returns a RESTStorage object that will work against CatalogPostings.
 func NewREST(opts generic.RESTOptions) *REST {
-	prefix := "/catalogPostings"
+	prefix := "/catalogpostings"
 
 	newListFunc := func() runtime.Object { return &catalogapi.CatalogPostingList{} }
 	storageInterface := opts.Decorator(

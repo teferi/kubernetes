@@ -26,7 +26,7 @@ func NewController(kubeClient clientset.Interface, resyncPeriod controller.Resyn
 
 	c.postingStore.Store, c.postingController = framework.NewInformer(
 		&cache.ListWatch{
-			ListWatch: func(options api.ListOptions) (runtime.Object, error) {
+			ListFunc: func(options api.ListOptions) (runtime.Object, error) {
 				return c.kubeClient.Servicecatalog().CatalogPostings(api.NamespaceAll).List(options)
 			},
 			WatchFunc: func(options api.ListOptions) (watch.Interface, error) {

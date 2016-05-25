@@ -6,7 +6,7 @@ import (
 	"k8s.io/kubernetes/pkg/runtime"
 )
 
-const GroupName = "catalog"
+const GroupName = "servicecatalog"
 
 // SchemeGroupVersion is group version used to register these objects
 var SchemeGroupVersion = unversioned.GroupVersion{Group: GroupName, Version: runtime.APIVersionInternal}

@@ -3,7 +3,7 @@ package catalogentry
 import (
 	"k8s.io/kubernetes/pkg/apis/servicecatalog"
 	"k8s.io/kubernetes/pkg/client/cache"
-	"k8s.io/kubernetes/pkg/labels"
+	//"k8s.io/kubernetes/pkg/labels"
 )
 
 // StoreToCatalogPostingLister gives a store List and Exists methods. The store must contain only
@@ -22,15 +22,15 @@ func (s *StoreToCatalogPostingLister) Exists(cp *servicecatalog.CatalogPosting) 
 }
 
 // List lists all CatalogPostings in the store.
-func (s *StoreToCatalogPostingLister) List() (cpList []servicecatalog.CatalogPostingList, err error) {
+func (s *StoreToCatalogPostingLister) List() (cpList servicecatalog.CatalogPostingList, err error) {
 	for _, cp := range s.Store.List() {
-		cpList = append(cpList, *(cp.(*servicecatalog.CatalogPosting)))
+		cpList.Items = append(cpList.Items, *(cp.(*servicecatalog.CatalogPosting)))
 	}
-	return psList, nil
+	return cpList, nil
 }
 
-func (s *StoreToCatalogPostingLister) GetCatalogPostings(servicecatalog string) (cpList []servicecatalog.CatalogPosting, err error) {
-	var selector labels.Selector
+func (s *StoreToCatalogPostingLister) GetCatalogPostings(catalog string) (cpList []servicecatalog.CatalogPosting, err error) {
+	//var selector labels.Selector
 	var cp servicecatalog.CatalogPosting
 
 	for _, m := range s.Store.List() {
