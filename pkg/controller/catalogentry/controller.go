@@ -17,11 +17,13 @@ type Controller struct {
 	kubeClient        clientset.Interface
 	postingStore      StoreToCatalogPostingLister
 	postingController *framework.Controller
+	catalogEntryCache cache.Store
 }
 
 func NewController(kubeClient clientset.Interface, resyncPeriod controller.ResyncPeriodFunc, catalogEntryCache cache.Store) *Controller {
 	c := &Controller{
-		kubeClient: kubeClient,
+		kubeClient:        kubeClient,
+		catalogEntryCache: catalogEntryCache,
 	}
 
 	c.postingStore.Store, c.postingController = framework.NewInformer(
@@ -53,10 +55,13 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 }
 
 func (c *Controller) postingAdded(obj interface{}) {
+	glog.Errorf("SETH saw added posting")
 }
 
 func (c *Controller) postingUpdated(oldObj, newObj interface{}) {
+	glog.Errorf("SETH saw updated posting")
 }
 
 func (c *Controller) postingDeleted(obj interface{}) {
+	glog.Errorf("SETH saw deleted posting")
 }
