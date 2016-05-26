@@ -1,18 +1,21 @@
 package catalogentry
 
 import (
+	"errors"
+
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/apis/servicecatalog"
-	"k8s.io/kubernetes/pkg/client/cache"
 	"k8s.io/kubernetes/pkg/runtime"
+
+	"github.com/golang/glog"
 )
 
 type catalogEntryREST struct {
-	catalogEntryCache cache.Store
+	catalogEntryCache map[string][]servicecatalog.CatalogEntry
 }
 
-func NewREST(catalogEntryCache cache.Store) *catalogEntryREST {
-	return &catalogEntryREST{}
+func NewREST(catalogEntryCache map[string][]servicecatalog.CatalogEntry) *catalogEntryREST {
+	return &catalogEntryREST{catalogEntryCache: catalogEntryCache}
 }
 
 func (r *catalogEntryREST) New() runtime.Object {
@@ -29,6 +32,16 @@ func (r *catalogEntryREST) List(ctx api.Context, options *api.ListOptions) (runt
 	// kubectl get --namespace finance catalogentries/oracle
 	// kubectl get catalogentries/finance/oracle <-- does not work
 	//r.catalogEntryCache.Get(<namemspace>)
-	return &servicecatalog.CatalogEntryList{}, nil
-
+	list := &servicecatalog.CatalogEntryList{}
+	namespace, ok := api.NamespaceFrom(ctx)
+	if !ok {
+		glog.Errorf("SETH namespace not found\n")
+		return nil, errors.New("namespace not found")
+	}
+	entries, ok := r.catalogEntryCache[namespace]
+	if !ok {
+		return list, nil
+	}
+	list.Items = entries
+	return list, nil
 }

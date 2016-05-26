@@ -17,10 +17,10 @@ type Controller struct {
 	kubeClient        clientset.Interface
 	postingStore      StoreToCatalogPostingLister
 	postingController *framework.Controller
-	catalogEntryCache cache.Store
+	catalogEntryCache map[string][]servicecatalog.CatalogEntry
 }
 
-func NewController(kubeClient clientset.Interface, resyncPeriod controller.ResyncPeriodFunc, catalogEntryCache cache.Store) *Controller {
+func NewController(kubeClient clientset.Interface, resyncPeriod controller.ResyncPeriodFunc, catalogEntryCache map[string][]servicecatalog.CatalogEntry) *Controller {
 	c := &Controller{
 		kubeClient:        kubeClient,
 		catalogEntryCache: catalogEntryCache,
@@ -55,6 +55,22 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 }
 
 func (c *Controller) postingAdded(obj interface{}) {
+	posting, ok := obj.(*servicecatalog.CatalogPosting)
+	if !ok {
+		glog.Errorf("expected type")
+		return
+	}
+	entry := servicecatalog.CatalogEntry{
+		ObjectMeta: api.ObjectMeta{
+			Name: posting.Name,
+		},
+		Catalog:     posting.Catalog,
+		Description: posting.Description,
+	}
+	if _, ok := c.catalogEntryCache[posting.Catalog]; !ok {
+		c.catalogEntryCache[posting.Catalog] = []servicecatalog.CatalogEntry{}
+	}
+	c.catalogEntryCache[posting.Catalog] = append(c.catalogEntryCache[posting.Catalog], entry)
 	glog.Errorf("SETH saw added posting")
 }
 

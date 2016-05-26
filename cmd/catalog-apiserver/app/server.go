@@ -29,7 +29,6 @@ import (
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/apimachinery/registered"
 	"k8s.io/kubernetes/pkg/apis/servicecatalog"
-	"k8s.io/kubernetes/pkg/client/cache"
 	clientset "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
 	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
 	catalogentryctrl "k8s.io/kubernetes/pkg/controller/catalogentry"
@@ -80,10 +79,7 @@ func Run(s *options.APIServer) error {
 	catalogStorage := catalogetcd.NewREST(restOptions)
 	catalogPostingStorage := catalogpostingetcd.NewREST(restOptions)
 
-	catalogEntryCache := cache.NewStore(func(obj interface{}) (string, error) {
-		//e, ok := obj.(*servicecatalog.CatalogEntry)
-		return "", nil
-	})
+	catalogEntryCache := make(map[string][]servicecatalog.CatalogEntry)
 	catalogEntryStorage := catalogentry.NewREST(catalogEntryCache)
 
 	restStorageMap := map[string]rest.Storage{
@@ -110,8 +106,6 @@ func Run(s *options.APIServer) error {
 		return err
 	}
 
-	m.Run(s.ServerRunOptions)
-
 	glog.Infof("Starting catalog entry controller")
 	kubeconfig, err := clientcmd.DefaultClientConfig.ClientConfig()
 	if err != nil {
@@ -121,7 +115,10 @@ func Run(s *options.APIServer) error {
 	catalogEntryControllerResync := func() time.Duration {
 		return 10 * time.Minute
 	}
+
 	go catalogentryctrl.NewController(catalogEntryControllerKubeClient, catalogEntryControllerResync, catalogEntryCache).Run(wait.NeverStop)
+
+	m.Run(s.ServerRunOptions)
 
 	return nil
 }
