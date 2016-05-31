@@ -79,7 +79,7 @@ func Run(s *options.APIServer) error {
 	catalogStorage := catalogetcd.NewREST(restOptions)
 	catalogPostingStorage := catalogpostingetcd.NewREST(restOptions)
 
-	catalogEntryCache := make(map[string][]servicecatalog.CatalogEntry)
+	catalogEntryCache := make(map[string]map[string]servicecatalog.CatalogEntry)
 	catalogEntryStorage := catalogentry.NewREST(catalogEntryCache)
 
 	restStorageMap := map[string]rest.Storage{

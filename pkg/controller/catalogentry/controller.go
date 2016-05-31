@@ -17,10 +17,10 @@ type Controller struct {
 	kubeClient        clientset.Interface
 	postingStore      StoreToCatalogPostingLister
 	postingController *framework.Controller
-	catalogEntryCache map[string][]servicecatalog.CatalogEntry
+	catalogEntryCache map[string]map[string]servicecatalog.CatalogEntry
 }
 
-func NewController(kubeClient clientset.Interface, resyncPeriod controller.ResyncPeriodFunc, catalogEntryCache map[string][]servicecatalog.CatalogEntry) *Controller {
+func NewController(kubeClient clientset.Interface, resyncPeriod controller.ResyncPeriodFunc, catalogEntryCache map[string]map[string]servicecatalog.CatalogEntry) *Controller {
 	c := &Controller{
 		kubeClient:        kubeClient,
 		catalogEntryCache: catalogEntryCache,
@@ -60,24 +60,69 @@ func (c *Controller) postingAdded(obj interface{}) {
 		glog.Errorf("expected type")
 		return
 	}
-	entry := servicecatalog.CatalogEntry{
+	_, ok = c.catalogEntryCache[posting.Catalog]
+	if !ok {
+		c.catalogEntryCache[posting.Catalog] = make(map[string]servicecatalog.CatalogEntry)
+	}
+	c.catalogEntryCache[posting.Catalog][posting.Name] = servicecatalog.CatalogEntry{
 		ObjectMeta: api.ObjectMeta{
 			Name: posting.Name,
 		},
-		Catalog:     posting.Catalog,
-		Description: posting.Description,
+		Catalog:         posting.Catalog,
+		Description:     posting.Description,
+		SourceNamespace: posting.Namespace,
 	}
-	if _, ok := c.catalogEntryCache[posting.Catalog]; !ok {
-		c.catalogEntryCache[posting.Catalog] = []servicecatalog.CatalogEntry{}
-	}
-	c.catalogEntryCache[posting.Catalog] = append(c.catalogEntryCache[posting.Catalog], entry)
 	glog.Errorf("SETH saw added posting")
 }
 
 func (c *Controller) postingUpdated(oldObj, newObj interface{}) {
+	old, ok := oldObj.(*servicecatalog.CatalogPosting)
+	if !ok {
+		glog.Errorf("expected type")
+		return
+	}
+	posting, ok := newObj.(*servicecatalog.CatalogPosting)
+	if !ok {
+		glog.Errorf("expected type")
+		return
+	}
+	catalog, ok := c.catalogEntryCache[old.Catalog]
+	if !ok {
+		glog.Error("expected catalog")
+		return
+	}
+	if old.Catalog != posting.Catalog {
+		glog.Error("catalog field can't be updated")
+		return
+	}
+	delete(catalog, old.Name)
+	catalog[posting.Name] = servicecatalog.CatalogEntry{
+		ObjectMeta: api.ObjectMeta{
+			Name: posting.Name,
+		},
+		Catalog:         posting.Catalog,
+		Description:     posting.Description,
+		SourceNamespace: posting.Namespace,
+	}
 	glog.Errorf("SETH saw updated posting")
 }
 
 func (c *Controller) postingDeleted(obj interface{}) {
+	posting, ok := obj.(*servicecatalog.CatalogPosting)
+	if !ok {
+		glog.Errorf("expected type")
+		return
+	}
+	catalog, ok := c.catalogEntryCache[posting.Catalog]
+	if !ok {
+		glog.Error("expected catalog")
+		return
+	}
+	_, ok = catalog[posting.Name]
+	if !ok {
+		glog.Error("expected catalog entry")
+		return
+	}
+	delete(catalog, posting.Name)
 	glog.Errorf("SETH saw deleted posting")
 }

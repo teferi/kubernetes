@@ -11,10 +11,10 @@ import (
 )
 
 type catalogEntryREST struct {
-	catalogEntryCache map[string][]servicecatalog.CatalogEntry
+	catalogEntryCache map[string]map[string]servicecatalog.CatalogEntry
 }
 
-func NewREST(catalogEntryCache map[string][]servicecatalog.CatalogEntry) *catalogEntryREST {
+func NewREST(catalogEntryCache map[string]map[string]servicecatalog.CatalogEntry) *catalogEntryREST {
 	return &catalogEntryREST{catalogEntryCache: catalogEntryCache}
 }
 
@@ -42,6 +42,12 @@ func (r *catalogEntryREST) List(ctx api.Context, options *api.ListOptions) (runt
 	if !ok {
 		return list, nil
 	}
-	list.Items = entries
+	items := make([]servicecatalog.CatalogEntry, len(entries))
+	i := 0
+	for _, value := range entries {
+		items[i] = value
+		i++
+	}
+	list.Items = items
 	return list, nil
 }
