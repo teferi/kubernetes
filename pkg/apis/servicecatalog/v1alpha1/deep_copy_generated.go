@@ -124,17 +124,6 @@ func DeepCopy_v1alpha1_CatalogEntry(in CatalogEntry, out *CatalogEntry, c *conve
 	out.Catalog = in.Catalog
 	out.Description = in.Description
 	out.SourceNamespace = in.SourceNamespace
-	if in.Output != nil {
-		in, out := in.Output, &out.Output
-		*out = make([]v1.ObjectReference, len(in))
-		for i := range in {
-			if err := v1.DeepCopy_v1_ObjectReference(in[i], &(*out)[i], c); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.Output = nil
-	}
 	return nil
 }
 
@@ -189,14 +178,8 @@ func DeepCopy_v1alpha1_CatalogPosting(in CatalogPosting, out *CatalogPosting, c 
 	}
 	out.Catalog = in.Catalog
 	out.Description = in.Description
-	if in.Data != nil {
-		in, out := in.Data, &out.Data
-		*out = make(map[string]string)
-		for key, val := range in {
-			(*out)[key] = val
-		}
-	} else {
-		out.Data = nil
+	if err := v1.DeepCopy_v1_LocalObjectReference(in.Resource, &out.Resource, c); err != nil {
+		return err
 	}
 	return nil
 }

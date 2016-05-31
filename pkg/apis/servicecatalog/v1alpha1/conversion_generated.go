@@ -37,9 +37,7 @@ func init() {
 		Convert_v1alpha1_CatalogClaimStatus_To_servicecatalog_CatalogClaimStatus,
 		Convert_servicecatalog_CatalogClaimStatus_To_v1alpha1_CatalogClaimStatus,
 		Convert_v1alpha1_CatalogEntry_To_servicecatalog_CatalogEntry,
-		Convert_servicecatalog_CatalogEntry_To_v1alpha1_CatalogEntry,
 		Convert_v1alpha1_CatalogEntryList_To_servicecatalog_CatalogEntryList,
-		Convert_servicecatalog_CatalogEntryList_To_v1alpha1_CatalogEntryList,
 		Convert_v1alpha1_CatalogList_To_servicecatalog_CatalogList,
 		Convert_servicecatalog_CatalogList_To_v1alpha1_CatalogList,
 	); err != nil {
@@ -187,53 +185,11 @@ func autoConvert_v1alpha1_CatalogEntry_To_servicecatalog_CatalogEntry(in *Catalo
 	out.Catalog = in.Catalog
 	out.Description = in.Description
 	out.SourceNamespace = in.SourceNamespace
-	if in.Output != nil {
-		in, out := &in.Output, &out.Output
-		*out = make([]api.ObjectReference, len(*in))
-		for i := range *in {
-			// TODO: Inefficient conversion - can we improve it?
-			if err := s.Convert(&(*in)[i], &(*out)[i], 0); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.Output = nil
-	}
 	return nil
 }
 
 func Convert_v1alpha1_CatalogEntry_To_servicecatalog_CatalogEntry(in *CatalogEntry, out *servicecatalog.CatalogEntry, s conversion.Scope) error {
 	return autoConvert_v1alpha1_CatalogEntry_To_servicecatalog_CatalogEntry(in, out, s)
-}
-
-func autoConvert_servicecatalog_CatalogEntry_To_v1alpha1_CatalogEntry(in *servicecatalog.CatalogEntry, out *CatalogEntry, s conversion.Scope) error {
-	if err := api.Convert_unversioned_TypeMeta_To_unversioned_TypeMeta(&in.TypeMeta, &out.TypeMeta, s); err != nil {
-		return err
-	}
-	// TODO: Inefficient conversion - can we improve it?
-	if err := s.Convert(&in.ObjectMeta, &out.ObjectMeta, 0); err != nil {
-		return err
-	}
-	out.Catalog = in.Catalog
-	out.Description = in.Description
-	out.SourceNamespace = in.SourceNamespace
-	if in.Output != nil {
-		in, out := &in.Output, &out.Output
-		*out = make([]v1.ObjectReference, len(*in))
-		for i := range *in {
-			// TODO: Inefficient conversion - can we improve it?
-			if err := s.Convert(&(*in)[i], &(*out)[i], 0); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.Output = nil
-	}
-	return nil
-}
-
-func Convert_servicecatalog_CatalogEntry_To_v1alpha1_CatalogEntry(in *servicecatalog.CatalogEntry, out *CatalogEntry, s conversion.Scope) error {
-	return autoConvert_servicecatalog_CatalogEntry_To_v1alpha1_CatalogEntry(in, out, s)
 }
 
 func autoConvert_v1alpha1_CatalogEntryList_To_servicecatalog_CatalogEntryList(in *CatalogEntryList, out *servicecatalog.CatalogEntryList, s conversion.Scope) error {
@@ -259,31 +215,6 @@ func autoConvert_v1alpha1_CatalogEntryList_To_servicecatalog_CatalogEntryList(in
 
 func Convert_v1alpha1_CatalogEntryList_To_servicecatalog_CatalogEntryList(in *CatalogEntryList, out *servicecatalog.CatalogEntryList, s conversion.Scope) error {
 	return autoConvert_v1alpha1_CatalogEntryList_To_servicecatalog_CatalogEntryList(in, out, s)
-}
-
-func autoConvert_servicecatalog_CatalogEntryList_To_v1alpha1_CatalogEntryList(in *servicecatalog.CatalogEntryList, out *CatalogEntryList, s conversion.Scope) error {
-	if err := api.Convert_unversioned_TypeMeta_To_unversioned_TypeMeta(&in.TypeMeta, &out.TypeMeta, s); err != nil {
-		return err
-	}
-	if err := api.Convert_unversioned_ListMeta_To_unversioned_ListMeta(&in.ListMeta, &out.ListMeta, s); err != nil {
-		return err
-	}
-	if in.Items != nil {
-		in, out := &in.Items, &out.Items
-		*out = make([]CatalogEntry, len(*in))
-		for i := range *in {
-			if err := Convert_servicecatalog_CatalogEntry_To_v1alpha1_CatalogEntry(&(*in)[i], &(*out)[i], s); err != nil {
-				return err
-			}
-		}
-	} else {
-		out.Items = nil
-	}
-	return nil
-}
-
-func Convert_servicecatalog_CatalogEntryList_To_v1alpha1_CatalogEntryList(in *servicecatalog.CatalogEntryList, out *CatalogEntryList, s conversion.Scope) error {
-	return autoConvert_servicecatalog_CatalogEntryList_To_v1alpha1_CatalogEntryList(in, out, s)
 }
 
 func autoConvert_v1alpha1_CatalogList_To_servicecatalog_CatalogList(in *CatalogList, out *servicecatalog.CatalogList, s conversion.Scope) error {

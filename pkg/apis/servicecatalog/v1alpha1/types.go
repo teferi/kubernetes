@@ -21,10 +21,9 @@ type CatalogEntry struct {
 	unversioned.TypeMeta `json:",inline"`
 	v1.ObjectMeta        `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Catalog         string               `json:"catalog,omitempty" protobuf:"bytes,4,opt,name=catalog"`
-	Description     string               `json:"description,omitempty" protobuf:"bytes,3,opt,name=description"`
-	SourceNamespace string               `json:"sourceNamespace,omitEmpty" protobuf:"bytes,5,opt,name=sourceNamespace"`
-	Output          []v1.ObjectReference `json:"output,omitempty" protobuf:"bytes,6,rep,name=output"`
+	Catalog         string `json:"catalog,omitempty" protobuf:"bytes,4,opt,name=catalog"`
+	Description     string `json:"description,omitempty" protobuf:"bytes,3,opt,name=description"`
+	SourceNamespace string `json:"sourceNamespace,omitEmpty" protobuf:"bytes,5,opt,name=sourceNamespace"`
 }
 
 type CatalogEntryList struct {
@@ -38,9 +37,9 @@ type CatalogPosting struct {
 	unversioned.TypeMeta `json:",inline"`
 	v1.ObjectMeta        `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Catalog     string            `json:"catalog" protobuf:"bytes,2,opt,name=catalog"`
-	Description string            `json:"description,omitempty" protobuf:"bytes,3,opt,name=description"`
-	Data        map[string]string `json:"data,omitempty" protobuf:"bytes,4,rep,name=data"`
+	Catalog     string                  `json:"catalog" protobuf:"bytes,2,opt,name=catalog"`
+	Description string                  `json:"description,omitempty" protobuf:"bytes,3,opt,name=description"`
+	Resource    v1.LocalObjectReference `protobuf:"bytes,4,opt,name=resource"`
 }
 
 type CatalogPostingList struct {

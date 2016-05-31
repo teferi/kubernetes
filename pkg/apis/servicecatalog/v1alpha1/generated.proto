@@ -66,8 +66,6 @@ message CatalogEntry {
   optional string description = 3;
 
   optional string sourceNamespace = 5;
-
-  repeated k8s.io.kubernetes.pkg.api.v1.ObjectReference output = 6;
 }
 
 message CatalogEntryList {
@@ -89,7 +87,7 @@ message CatalogPosting {
 
   optional string description = 3;
 
-  map<string, string> data = 4;
+  optional k8s.io.kubernetes.pkg.api.v1.LocalObjectReference resource = 4;
 }
 
 message CatalogPostingList {
