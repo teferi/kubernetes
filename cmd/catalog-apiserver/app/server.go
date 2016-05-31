@@ -34,6 +34,7 @@ import (
 	catalogentryctrl "k8s.io/kubernetes/pkg/controller/catalogentry"
 	"k8s.io/kubernetes/pkg/genericapiserver"
 	catalogetcd "k8s.io/kubernetes/pkg/registry/catalog/etcd"
+	catalogclaimetcd "k8s.io/kubernetes/pkg/registry/catalogclaim/etcd"
 	"k8s.io/kubernetes/pkg/registry/catalogentry"
 	catalogpostingetcd "k8s.io/kubernetes/pkg/registry/catalogposting/etcd"
 	"k8s.io/kubernetes/pkg/registry/generic"
@@ -78,6 +79,7 @@ func Run(s *options.APIServer) error {
 	}
 	catalogStorage := catalogetcd.NewREST(restOptions)
 	catalogPostingStorage := catalogpostingetcd.NewREST(restOptions)
+	catalogClaimStorage := catalogclaimetcd.NewREST(restOptions)
 
 	catalogEntryCache := make(map[string]map[string]servicecatalog.CatalogEntry)
 	catalogEntryStorage := catalogentry.NewREST(catalogEntryCache)
@@ -86,6 +88,7 @@ func Run(s *options.APIServer) error {
 		"catalogs":        catalogStorage,
 		"catalogentries":  catalogEntryStorage,
 		"catalogpostings": catalogPostingStorage,
+		"catalogclaims":   catalogClaimStorage,
 	}
 
 	// Create API Group
