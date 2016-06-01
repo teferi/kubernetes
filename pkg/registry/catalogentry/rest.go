@@ -5,16 +5,17 @@ import (
 
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/apis/servicecatalog"
+	"k8s.io/kubernetes/pkg/client/cache"
 	"k8s.io/kubernetes/pkg/runtime"
 
 	"github.com/golang/glog"
 )
 
 type catalogEntryREST struct {
-	catalogEntryCache map[string]map[string]servicecatalog.CatalogEntry
+	catalogEntryCache cache.Store
 }
 
-func NewREST(catalogEntryCache map[string]map[string]servicecatalog.CatalogEntry) *catalogEntryREST {
+func NewREST(catalogEntryCache cache.Store) *catalogEntryREST {
 	return &catalogEntryREST{catalogEntryCache: catalogEntryCache}
 }
 
@@ -32,22 +33,24 @@ func (r *catalogEntryREST) List(ctx api.Context, options *api.ListOptions) (runt
 	// kubectl get --namespace finance catalogentries/oracle
 	// kubectl get catalogentries/finance/oracle <-- does not work
 	//r.catalogEntryCache.Get(<namemspace>)
-	list := &servicecatalog.CatalogEntryList{}
-	namespace, ok := api.NamespaceFrom(ctx)
-	if !ok {
-		glog.Errorf("SETH namespace not found\n")
-		return nil, errors.New("namespace not found")
-	}
-	entries, ok := r.catalogEntryCache[namespace]
-	if !ok {
-		return list, nil
-	}
+	entries := r.catalogEntryCache.List()
 	items := make([]servicecatalog.CatalogEntry, len(entries))
-	i := 0
-	for _, value := range entries {
-		items[i] = value
-		i++
+	for i, entry := range entries {
+		items[i] = *(entry.(*servicecatalog.CatalogEntry))
 	}
-	list.Items = items
-	return list, nil
+	return &servicecatalog.CatalogEntryList{Items: items}, nil
+}
+
+func (r *catalogEntryREST) Get(ctx api.Context, name string) (runtime.Object, error) {
+	glog.Errorf("SETH getting the things")
+	entry, ok, err := r.catalogEntryCache.GetByKey(name)
+	if err != nil {
+		glog.Errorf("SETH error getting entry %s: %v\n", name, err)
+		return nil, err
+	}
+	if !ok {
+		glog.Errorf("SETH entry  not found\n")
+		return nil, errors.New("entry not found")
+	}
+	return entry.(*servicecatalog.CatalogEntry), nil
 }

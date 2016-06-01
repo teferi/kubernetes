@@ -17,10 +17,10 @@ type Controller struct {
 	kubeClient        clientset.Interface
 	postingStore      StoreToCatalogPostingLister
 	postingController *framework.Controller
-	catalogEntryCache map[string]map[string]servicecatalog.CatalogEntry
+	catalogEntryCache cache.Store
 }
 
-func NewController(kubeClient clientset.Interface, resyncPeriod controller.ResyncPeriodFunc, catalogEntryCache map[string]map[string]servicecatalog.CatalogEntry) *Controller {
+func NewController(kubeClient clientset.Interface, resyncPeriod controller.ResyncPeriodFunc, catalogEntryCache cache.Store) *Controller {
 	c := &Controller{
 		kubeClient:        kubeClient,
 		catalogEntryCache: catalogEntryCache,
@@ -60,11 +60,7 @@ func (c *Controller) postingAdded(obj interface{}) {
 		glog.Errorf("expected type")
 		return
 	}
-	_, ok = c.catalogEntryCache[posting.Catalog]
-	if !ok {
-		c.catalogEntryCache[posting.Catalog] = make(map[string]servicecatalog.CatalogEntry)
-	}
-	c.catalogEntryCache[posting.Catalog][posting.Name] = servicecatalog.CatalogEntry{
+	entry := &servicecatalog.CatalogEntry{
 		ObjectMeta: api.ObjectMeta{
 			Name: posting.Name,
 		},
@@ -72,11 +68,12 @@ func (c *Controller) postingAdded(obj interface{}) {
 		Description:     posting.Description,
 		SourceNamespace: posting.Namespace,
 	}
+	c.catalogEntryCache.Add(entry)
 	glog.Errorf("SETH saw added posting")
 }
 
 func (c *Controller) postingUpdated(oldObj, newObj interface{}) {
-	old, ok := oldObj.(*servicecatalog.CatalogPosting)
+	/*old, ok := oldObj.(*servicecatalog.CatalogPosting)
 	if !ok {
 		glog.Errorf("expected type")
 		return
@@ -103,7 +100,7 @@ func (c *Controller) postingUpdated(oldObj, newObj interface{}) {
 		Catalog:         posting.Catalog,
 		Description:     posting.Description,
 		SourceNamespace: posting.Namespace,
-	}
+	}*/
 	glog.Errorf("SETH saw updated posting")
 }
 
@@ -113,16 +110,9 @@ func (c *Controller) postingDeleted(obj interface{}) {
 		glog.Errorf("expected type")
 		return
 	}
-	catalog, ok := c.catalogEntryCache[posting.Catalog]
-	if !ok {
-		glog.Error("expected catalog")
-		return
+	err := c.catalogEntryCache.Delete(posting.Name)
+	if err != nil {
+		glog.Errorf("store failed delete on entry %s, %v\n", posting.Name, err)
 	}
-	_, ok = catalog[posting.Name]
-	if !ok {
-		glog.Error("expected catalog entry")
-		return
-	}
-	delete(catalog, posting.Name)
 	glog.Errorf("SETH saw deleted posting")
 }

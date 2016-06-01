@@ -29,6 +29,7 @@ import (
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/apimachinery/registered"
 	"k8s.io/kubernetes/pkg/apis/servicecatalog"
+	"k8s.io/kubernetes/pkg/client/cache"
 	clientset "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
 	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
 	catalogentryctrl "k8s.io/kubernetes/pkg/controller/catalogentry"
@@ -81,7 +82,11 @@ func Run(s *options.APIServer) error {
 	catalogPostingStorage := catalogpostingetcd.NewREST(restOptions)
 	catalogClaimStorage := catalogclaimetcd.NewREST(restOptions)
 
-	catalogEntryCache := make(map[string]map[string]servicecatalog.CatalogEntry)
+	catalogEntryCache := cache.NewStore(
+		func(obj interface{}) (string, error) {
+			entry := obj.(*servicecatalog.CatalogEntry)
+			return entry.Name, nil
+		})
 	catalogEntryStorage := catalogentry.NewREST(catalogEntryCache)
 
 	restStorageMap := map[string]rest.Storage{
