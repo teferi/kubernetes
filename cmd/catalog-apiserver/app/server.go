@@ -31,6 +31,8 @@ import (
 	"k8s.io/kubernetes/pkg/apis/servicecatalog"
 	"k8s.io/kubernetes/pkg/client/cache"
 	clientset "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
+	"k8s.io/kubernetes/pkg/client/restclient"
+	"k8s.io/kubernetes/pkg/client/typed/dynamic"
 	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
 	catalogclaimctrl "k8s.io/kubernetes/pkg/controller/catalogclaim"
 	catalogentryctrl "k8s.io/kubernetes/pkg/controller/catalogentry"
@@ -115,20 +117,31 @@ func Run(s *options.APIServer) error {
 		return err
 	}
 
-	kubeconfig, err := clientcmd.DefaultClientConfig.ClientConfig()
+	catalogConfig, err := clientcmd.DefaultClientConfig.ClientConfig()
+	catalogConfig.Host = "http://localhost:8081"
 	if err != nil {
 		return err
 	}
-	client := clientset.NewForConfigOrDie(kubeconfig)
+	catalogClient := clientset.NewForConfigOrDie(catalogConfig)
+
+	kubeConfig, err := clientcmd.DefaultClientConfig.ClientConfig()
+	kubeConfig.Host = "http://localhost:8080"
+	if err != nil {
+		return err
+	}
+	kubeClient := clientset.NewForConfigOrDie(kubeConfig)
+
 	controllerResync := func() time.Duration {
 		return 10 * time.Minute
 	}
 
+	clientPool := dynamic.NewClientPool(restclient.AddUserAgent(kubeConfig, "catalog-claim-controller"), dynamic.LegacyAPIPathResolverFunc)
+
 	glog.Infof("Starting catalog entry controller")
-	go catalogentryctrl.NewController(client, controllerResync, catalogEntryCache).Run(wait.NeverStop)
+	go catalogentryctrl.NewController(catalogClient, controllerResync, catalogEntryCache).Run(wait.NeverStop)
 
 	glog.Infof("Starting catalog claim controller")
-	go catalogclaimctrl.NewController(client, controllerResync).Run(wait.NeverStop)
+	go catalogclaimctrl.NewController(kubeClient, catalogClient, controllerResync, clientPool).Run(wait.NeverStop)
 
 	m.Run(s.ServerRunOptions)
 
