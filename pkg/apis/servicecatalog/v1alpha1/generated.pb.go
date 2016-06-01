@@ -35,6 +35,7 @@ limitations under the License.
 		CatalogList
 		CatalogPosting
 		CatalogPostingList
+		LocalResourceSpec
 */
 package v1alpha1
 
@@ -91,6 +92,10 @@ func (m *CatalogPostingList) Reset()         { *m = CatalogPostingList{} }
 func (m *CatalogPostingList) String() string { return proto.CompactTextString(m) }
 func (*CatalogPostingList) ProtoMessage()    {}
 
+func (m *LocalResourceSpec) Reset()         { *m = LocalResourceSpec{} }
+func (m *LocalResourceSpec) String() string { return proto.CompactTextString(m) }
+func (*LocalResourceSpec) ProtoMessage()    {}
+
 func init() {
 	proto.RegisterType((*Catalog)(nil), "k8s.io.kubernetes.pkg.apis.servicecatalog.v1alpha1.Catalog")
 	proto.RegisterType((*CatalogClaim)(nil), "k8s.io.kubernetes.pkg.apis.servicecatalog.v1alpha1.CatalogClaim")
@@ -102,6 +107,7 @@ func init() {
 	proto.RegisterType((*CatalogList)(nil), "k8s.io.kubernetes.pkg.apis.servicecatalog.v1alpha1.CatalogList")
 	proto.RegisterType((*CatalogPosting)(nil), "k8s.io.kubernetes.pkg.apis.servicecatalog.v1alpha1.CatalogPosting")
 	proto.RegisterType((*CatalogPostingList)(nil), "k8s.io.kubernetes.pkg.apis.servicecatalog.v1alpha1.CatalogPostingList")
+	proto.RegisterType((*LocalResourceSpec)(nil), "k8s.io.kubernetes.pkg.apis.servicecatalog.v1alpha1.LocalResourceSpec")
 }
 func (m *Catalog) Marshal() (data []byte, err error) {
 	size := m.Size()
@@ -414,14 +420,16 @@ func (m *CatalogPosting) MarshalTo(data []byte) (int, error) {
 	i++
 	i = encodeVarintGenerated(data, i, uint64(len(m.Description)))
 	i += copy(data[i:], m.Description)
-	data[i] = 0x22
-	i++
-	i = encodeVarintGenerated(data, i, uint64(m.Resource.Size()))
-	n10, err := m.Resource.MarshalTo(data[i:])
-	if err != nil {
-		return 0, err
+	if m.LocalResources != nil {
+		data[i] = 0x22
+		i++
+		i = encodeVarintGenerated(data, i, uint64(m.LocalResources.Size()))
+		n10, err := m.LocalResources.MarshalTo(data[i:])
+		if err != nil {
+			return 0, err
+		}
+		i += n10
 	}
-	i += n10
 	return i, nil
 }
 
@@ -451,6 +459,36 @@ func (m *CatalogPostingList) MarshalTo(data []byte) (int, error) {
 	if len(m.Items) > 0 {
 		for _, msg := range m.Items {
 			data[i] = 0x12
+			i++
+			i = encodeVarintGenerated(data, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(data[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	return i, nil
+}
+
+func (m *LocalResourceSpec) Marshal() (data []byte, err error) {
+	size := m.Size()
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
+	if err != nil {
+		return nil, err
+	}
+	return data[:n], nil
+}
+
+func (m *LocalResourceSpec) MarshalTo(data []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.Items) > 0 {
+		for _, msg := range m.Items {
+			data[i] = 0xa
 			i++
 			i = encodeVarintGenerated(data, i, uint64(msg.Size()))
 			n, err := msg.MarshalTo(data[i:])
@@ -599,8 +637,10 @@ func (m *CatalogPosting) Size() (n int) {
 	n += 1 + l + sovGenerated(uint64(l))
 	l = len(m.Description)
 	n += 1 + l + sovGenerated(uint64(l))
-	l = m.Resource.Size()
-	n += 1 + l + sovGenerated(uint64(l))
+	if m.LocalResources != nil {
+		l = m.LocalResources.Size()
+		n += 1 + l + sovGenerated(uint64(l))
+	}
 	return n
 }
 
@@ -609,6 +649,18 @@ func (m *CatalogPostingList) Size() (n int) {
 	_ = l
 	l = m.ListMeta.Size()
 	n += 1 + l + sovGenerated(uint64(l))
+	if len(m.Items) > 0 {
+		for _, e := range m.Items {
+			l = e.Size()
+			n += 1 + l + sovGenerated(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *LocalResourceSpec) Size() (n int) {
+	var l int
+	_ = l
 	if len(m.Items) > 0 {
 		for _, e := range m.Items {
 			l = e.Size()
@@ -1688,7 +1740,7 @@ func (m *CatalogPosting) Unmarshal(data []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Resource", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field LocalResources", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1712,7 +1764,10 @@ func (m *CatalogPosting) Unmarshal(data []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.Resource.Unmarshal(data[iNdEx:postIndex]); err != nil {
+			if m.LocalResources == nil {
+				m.LocalResources = &LocalResourceSpec{}
+			}
+			if err := m.LocalResources.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1823,6 +1878,87 @@ func (m *CatalogPostingList) Unmarshal(data []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Items = append(m.Items, CatalogPosting{})
+			if err := m.Items[len(m.Items)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenerated(data[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthGenerated
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *LocalResourceSpec) Unmarshal(data []byte) error {
+	l := len(data)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenerated
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := data[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: LocalResourceSpec: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: LocalResourceSpec: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Items", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenerated
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := data[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenerated
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Items = append(m.Items, k8s_io_kubernetes_pkg_api_v1.ObjectReference{})
 			if err := m.Items[len(m.Items)-1].Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}

@@ -38,6 +38,7 @@ func init() {
 		DeepCopy_servicecatalog_CatalogList,
 		DeepCopy_servicecatalog_CatalogPosting,
 		DeepCopy_servicecatalog_CatalogPostingList,
+		DeepCopy_servicecatalog_LocalResourceSpec,
 	); err != nil {
 		// if one of the deep copy functions is malformed, detect it immediately.
 		panic(err)
@@ -189,18 +190,14 @@ func DeepCopy_servicecatalog_CatalogPosting(in CatalogPosting, out *CatalogPosti
 	}
 	out.Catalog = in.Catalog
 	out.Description = in.Description
-	if in.Data != nil {
-		in, out := in.Data, &out.Data
-		*out = make(map[string]interface{})
-		for key, val := range in {
-			if newVal, err := c.DeepCopy(val); err != nil {
-				return err
-			} else {
-				(*out)[key] = newVal.(interface{})
-			}
+	if in.LocalResources != nil {
+		in, out := in.LocalResources, &out.LocalResources
+		*out = new(LocalResourceSpec)
+		if err := DeepCopy_servicecatalog_LocalResourceSpec(*in, *out, c); err != nil {
+			return err
 		}
 	} else {
-		out.Data = nil
+		out.LocalResources = nil
 	}
 	return nil
 }
@@ -217,6 +214,21 @@ func DeepCopy_servicecatalog_CatalogPostingList(in CatalogPostingList, out *Cata
 		*out = make([]CatalogPosting, len(in))
 		for i := range in {
 			if err := DeepCopy_servicecatalog_CatalogPosting(in[i], &(*out)[i], c); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
+	return nil
+}
+
+func DeepCopy_servicecatalog_LocalResourceSpec(in LocalResourceSpec, out *LocalResourceSpec, c *conversion.Cloner) error {
+	if in.Items != nil {
+		in, out := in.Items, &out.Items
+		*out = make([]api.ObjectReference, len(in))
+		for i := range in {
+			if err := api.DeepCopy_api_ObjectReference(in[i], &(*out)[i], c); err != nil {
 				return err
 			}
 		}

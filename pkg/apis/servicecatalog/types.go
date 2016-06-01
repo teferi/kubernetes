@@ -60,7 +60,11 @@ type CatalogPosting struct {
 		]
 	}
 	*/
-	Data map[string]interface{}
+	LocalResources *LocalResourceSpec
+}
+
+type LocalResourceSpec struct {
+	Items []api.ObjectReference
 }
 
 type CatalogPostingList struct {

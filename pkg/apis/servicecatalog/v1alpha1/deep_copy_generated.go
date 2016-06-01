@@ -39,6 +39,7 @@ func init() {
 		DeepCopy_v1alpha1_CatalogList,
 		DeepCopy_v1alpha1_CatalogPosting,
 		DeepCopy_v1alpha1_CatalogPostingList,
+		DeepCopy_v1alpha1_LocalResourceSpec,
 	); err != nil {
 		// if one of the deep copy functions is malformed, detect it immediately.
 		panic(err)
@@ -178,8 +179,14 @@ func DeepCopy_v1alpha1_CatalogPosting(in CatalogPosting, out *CatalogPosting, c 
 	}
 	out.Catalog = in.Catalog
 	out.Description = in.Description
-	if err := v1.DeepCopy_v1_LocalObjectReference(in.Resource, &out.Resource, c); err != nil {
-		return err
+	if in.LocalResources != nil {
+		in, out := in.LocalResources, &out.LocalResources
+		*out = new(LocalResourceSpec)
+		if err := DeepCopy_v1alpha1_LocalResourceSpec(*in, *out, c); err != nil {
+			return err
+		}
+	} else {
+		out.LocalResources = nil
 	}
 	return nil
 }
@@ -196,6 +203,21 @@ func DeepCopy_v1alpha1_CatalogPostingList(in CatalogPostingList, out *CatalogPos
 		*out = make([]CatalogPosting, len(in))
 		for i := range in {
 			if err := DeepCopy_v1alpha1_CatalogPosting(in[i], &(*out)[i], c); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
+	return nil
+}
+
+func DeepCopy_v1alpha1_LocalResourceSpec(in LocalResourceSpec, out *LocalResourceSpec, c *conversion.Cloner) error {
+	if in.Items != nil {
+		in, out := in.Items, &out.Items
+		*out = make([]v1.ObjectReference, len(in))
+		for i := range in {
+			if err := v1.DeepCopy_v1_ObjectReference(in[i], &(*out)[i], c); err != nil {
 				return err
 			}
 		}

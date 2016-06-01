@@ -21,6 +21,7 @@ syntax = 'proto2';
 
 package k8s.io.kubernetes.pkg.apis.servicecatalog.v1alpha1;
 
+import "k8s.io/kubernetes/pkg/api/resource/generated.proto";
 import "k8s.io/kubernetes/pkg/api/unversioned/generated.proto";
 import "k8s.io/kubernetes/pkg/api/v1/generated.proto";
 import "k8s.io/kubernetes/pkg/util/intstr/generated.proto";
@@ -87,12 +88,16 @@ message CatalogPosting {
 
   optional string description = 3;
 
-  optional k8s.io.kubernetes.pkg.api.v1.LocalObjectReference resource = 4;
+  optional LocalResourceSpec localResources = 4;
 }
 
 message CatalogPostingList {
   optional k8s.io.kubernetes.pkg.api.unversioned.ListMeta metadata = 1;
 
   repeated CatalogPosting items = 2;
+}
+
+message LocalResourceSpec {
+  repeated k8s.io.kubernetes.pkg.api.v1.ObjectReference items = 1;
 }
 

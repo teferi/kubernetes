@@ -37,9 +37,13 @@ type CatalogPosting struct {
 	unversioned.TypeMeta `json:",inline"`
 	v1.ObjectMeta        `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
-	Catalog     string                  `json:"catalog" protobuf:"bytes,2,opt,name=catalog"`
-	Description string                  `json:"description,omitempty" protobuf:"bytes,3,opt,name=description"`
-	Resource    v1.LocalObjectReference `protobuf:"bytes,4,opt,name=resource"`
+	Catalog        string             `json:"catalog" protobuf:"bytes,2,opt,name=catalog"`
+	Description    string             `json:"description,omitempty" protobuf:"bytes,3,opt,name=description"`
+	LocalResources *LocalResourceSpec `json:"localResources,omitempty" protobuf:"bytes,4,opt,name=localResources"`
+}
+
+type LocalResourceSpec struct {
+	Items []v1.ObjectReference `json:"items,omitempty" protobuf:"bytes,1,rep,name=items"`
 }
 
 type CatalogPostingList struct {

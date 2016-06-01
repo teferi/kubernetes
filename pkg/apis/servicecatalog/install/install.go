@@ -68,7 +68,7 @@ func enableVersions(externalVersions []unversioned.GroupVersion) error {
 }
 
 func newRESTMapper(externalVersions []unversioned.GroupVersion) meta.RESTMapper {
-	rootScoped := sets.NewString("Catalog")
+	rootScoped := sets.NewString("Catalog", "CatalogEntry")
 	ignoredKinds := sets.NewString()
 	return api.NewDefaultRESTMapper(externalVersions, interfacesFor, importPrefix, ignoredKinds, rootScoped)
 }

@@ -40,6 +40,12 @@ func init() {
 		Convert_v1alpha1_CatalogEntryList_To_servicecatalog_CatalogEntryList,
 		Convert_v1alpha1_CatalogList_To_servicecatalog_CatalogList,
 		Convert_servicecatalog_CatalogList_To_v1alpha1_CatalogList,
+		Convert_v1alpha1_CatalogPosting_To_servicecatalog_CatalogPosting,
+		Convert_servicecatalog_CatalogPosting_To_v1alpha1_CatalogPosting,
+		Convert_v1alpha1_CatalogPostingList_To_servicecatalog_CatalogPostingList,
+		Convert_servicecatalog_CatalogPostingList_To_v1alpha1_CatalogPostingList,
+		Convert_v1alpha1_LocalResourceSpec_To_servicecatalog_LocalResourceSpec,
+		Convert_servicecatalog_LocalResourceSpec_To_v1alpha1_LocalResourceSpec,
 	); err != nil {
 		// if one of the conversion functions is malformed, detect it immediately.
 		panic(err)
@@ -265,4 +271,146 @@ func autoConvert_servicecatalog_CatalogList_To_v1alpha1_CatalogList(in *servicec
 
 func Convert_servicecatalog_CatalogList_To_v1alpha1_CatalogList(in *servicecatalog.CatalogList, out *CatalogList, s conversion.Scope) error {
 	return autoConvert_servicecatalog_CatalogList_To_v1alpha1_CatalogList(in, out, s)
+}
+
+func autoConvert_v1alpha1_CatalogPosting_To_servicecatalog_CatalogPosting(in *CatalogPosting, out *servicecatalog.CatalogPosting, s conversion.Scope) error {
+	if err := api.Convert_unversioned_TypeMeta_To_unversioned_TypeMeta(&in.TypeMeta, &out.TypeMeta, s); err != nil {
+		return err
+	}
+	// TODO: Inefficient conversion - can we improve it?
+	if err := s.Convert(&in.ObjectMeta, &out.ObjectMeta, 0); err != nil {
+		return err
+	}
+	out.Catalog = in.Catalog
+	out.Description = in.Description
+	if in.LocalResources != nil {
+		in, out := &in.LocalResources, &out.LocalResources
+		*out = new(servicecatalog.LocalResourceSpec)
+		if err := Convert_v1alpha1_LocalResourceSpec_To_servicecatalog_LocalResourceSpec(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.LocalResources = nil
+	}
+	return nil
+}
+
+func Convert_v1alpha1_CatalogPosting_To_servicecatalog_CatalogPosting(in *CatalogPosting, out *servicecatalog.CatalogPosting, s conversion.Scope) error {
+	return autoConvert_v1alpha1_CatalogPosting_To_servicecatalog_CatalogPosting(in, out, s)
+}
+
+func autoConvert_servicecatalog_CatalogPosting_To_v1alpha1_CatalogPosting(in *servicecatalog.CatalogPosting, out *CatalogPosting, s conversion.Scope) error {
+	if err := api.Convert_unversioned_TypeMeta_To_unversioned_TypeMeta(&in.TypeMeta, &out.TypeMeta, s); err != nil {
+		return err
+	}
+	// TODO: Inefficient conversion - can we improve it?
+	if err := s.Convert(&in.ObjectMeta, &out.ObjectMeta, 0); err != nil {
+		return err
+	}
+	out.Catalog = in.Catalog
+	out.Description = in.Description
+	if in.LocalResources != nil {
+		in, out := &in.LocalResources, &out.LocalResources
+		*out = new(LocalResourceSpec)
+		if err := Convert_servicecatalog_LocalResourceSpec_To_v1alpha1_LocalResourceSpec(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.LocalResources = nil
+	}
+	return nil
+}
+
+func Convert_servicecatalog_CatalogPosting_To_v1alpha1_CatalogPosting(in *servicecatalog.CatalogPosting, out *CatalogPosting, s conversion.Scope) error {
+	return autoConvert_servicecatalog_CatalogPosting_To_v1alpha1_CatalogPosting(in, out, s)
+}
+
+func autoConvert_v1alpha1_CatalogPostingList_To_servicecatalog_CatalogPostingList(in *CatalogPostingList, out *servicecatalog.CatalogPostingList, s conversion.Scope) error {
+	if err := api.Convert_unversioned_TypeMeta_To_unversioned_TypeMeta(&in.TypeMeta, &out.TypeMeta, s); err != nil {
+		return err
+	}
+	if err := api.Convert_unversioned_ListMeta_To_unversioned_ListMeta(&in.ListMeta, &out.ListMeta, s); err != nil {
+		return err
+	}
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]servicecatalog.CatalogPosting, len(*in))
+		for i := range *in {
+			if err := Convert_v1alpha1_CatalogPosting_To_servicecatalog_CatalogPosting(&(*in)[i], &(*out)[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
+	return nil
+}
+
+func Convert_v1alpha1_CatalogPostingList_To_servicecatalog_CatalogPostingList(in *CatalogPostingList, out *servicecatalog.CatalogPostingList, s conversion.Scope) error {
+	return autoConvert_v1alpha1_CatalogPostingList_To_servicecatalog_CatalogPostingList(in, out, s)
+}
+
+func autoConvert_servicecatalog_CatalogPostingList_To_v1alpha1_CatalogPostingList(in *servicecatalog.CatalogPostingList, out *CatalogPostingList, s conversion.Scope) error {
+	if err := api.Convert_unversioned_TypeMeta_To_unversioned_TypeMeta(&in.TypeMeta, &out.TypeMeta, s); err != nil {
+		return err
+	}
+	if err := api.Convert_unversioned_ListMeta_To_unversioned_ListMeta(&in.ListMeta, &out.ListMeta, s); err != nil {
+		return err
+	}
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]CatalogPosting, len(*in))
+		for i := range *in {
+			if err := Convert_servicecatalog_CatalogPosting_To_v1alpha1_CatalogPosting(&(*in)[i], &(*out)[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
+	return nil
+}
+
+func Convert_servicecatalog_CatalogPostingList_To_v1alpha1_CatalogPostingList(in *servicecatalog.CatalogPostingList, out *CatalogPostingList, s conversion.Scope) error {
+	return autoConvert_servicecatalog_CatalogPostingList_To_v1alpha1_CatalogPostingList(in, out, s)
+}
+
+func autoConvert_v1alpha1_LocalResourceSpec_To_servicecatalog_LocalResourceSpec(in *LocalResourceSpec, out *servicecatalog.LocalResourceSpec, s conversion.Scope) error {
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]api.ObjectReference, len(*in))
+		for i := range *in {
+			// TODO: Inefficient conversion - can we improve it?
+			if err := s.Convert(&(*in)[i], &(*out)[i], 0); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
+	return nil
+}
+
+func Convert_v1alpha1_LocalResourceSpec_To_servicecatalog_LocalResourceSpec(in *LocalResourceSpec, out *servicecatalog.LocalResourceSpec, s conversion.Scope) error {
+	return autoConvert_v1alpha1_LocalResourceSpec_To_servicecatalog_LocalResourceSpec(in, out, s)
+}
+
+func autoConvert_servicecatalog_LocalResourceSpec_To_v1alpha1_LocalResourceSpec(in *servicecatalog.LocalResourceSpec, out *LocalResourceSpec, s conversion.Scope) error {
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]v1.ObjectReference, len(*in))
+		for i := range *in {
+			// TODO: Inefficient conversion - can we improve it?
+			if err := s.Convert(&(*in)[i], &(*out)[i], 0); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
+	return nil
+}
+
+func Convert_servicecatalog_LocalResourceSpec_To_v1alpha1_LocalResourceSpec(in *servicecatalog.LocalResourceSpec, out *LocalResourceSpec, s conversion.Scope) error {
+	return autoConvert_servicecatalog_LocalResourceSpec_To_v1alpha1_LocalResourceSpec(in, out, s)
 }
