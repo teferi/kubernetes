@@ -32,6 +32,7 @@ import (
 	"k8s.io/kubernetes/pkg/client/cache"
 	clientset "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
 	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
+	catalogclaimctrl "k8s.io/kubernetes/pkg/controller/catalogclaim"
 	catalogentryctrl "k8s.io/kubernetes/pkg/controller/catalogentry"
 	"k8s.io/kubernetes/pkg/genericapiserver"
 	catalogetcd "k8s.io/kubernetes/pkg/registry/catalog/etcd"
@@ -114,17 +115,20 @@ func Run(s *options.APIServer) error {
 		return err
 	}
 
-	glog.Infof("Starting catalog entry controller")
 	kubeconfig, err := clientcmd.DefaultClientConfig.ClientConfig()
 	if err != nil {
 		return err
 	}
-	catalogEntryControllerKubeClient := clientset.NewForConfigOrDie(kubeconfig)
-	catalogEntryControllerResync := func() time.Duration {
+	client := clientset.NewForConfigOrDie(kubeconfig)
+	controllerResync := func() time.Duration {
 		return 10 * time.Minute
 	}
 
-	go catalogentryctrl.NewController(catalogEntryControllerKubeClient, catalogEntryControllerResync, catalogEntryCache).Run(wait.NeverStop)
+	glog.Infof("Starting catalog entry controller")
+	go catalogentryctrl.NewController(client, controllerResync, catalogEntryCache).Run(wait.NeverStop)
+
+	glog.Infof("Starting catalog claim controller")
+	go catalogclaimctrl.NewController(client, controllerResync).Run(wait.NeverStop)
 
 	m.Run(s.ServerRunOptions)
 
