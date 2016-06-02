@@ -31,8 +31,6 @@ import (
 	"k8s.io/kubernetes/pkg/apis/servicecatalog"
 	"k8s.io/kubernetes/pkg/client/cache"
 	clientset "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
-	"k8s.io/kubernetes/pkg/client/restclient"
-	"k8s.io/kubernetes/pkg/client/typed/dynamic"
 	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
 	catalogclaimctrl "k8s.io/kubernetes/pkg/controller/catalogclaim"
 	catalogentryctrl "k8s.io/kubernetes/pkg/controller/catalogentry"
@@ -135,13 +133,13 @@ func Run(s *options.APIServer) error {
 		return 10 * time.Minute
 	}
 
-	clientPool := dynamic.NewClientPool(restclient.AddUserAgent(kubeConfig, "catalog-claim-controller"), dynamic.LegacyAPIPathResolverFunc)
+	//clientPool := dynamic.NewClientPool(restclient.AddUserAgent(kubeConfig, "catalog-claim-controller"), dynamic.LegacyAPIPathResolverFunc)
 
 	glog.Infof("Starting catalog entry controller")
 	go catalogentryctrl.NewController(catalogClient, controllerResync, catalogEntryCache).Run(wait.NeverStop)
 
 	glog.Infof("Starting catalog claim controller")
-	go catalogclaimctrl.NewController(kubeClient, catalogClient, controllerResync, clientPool).Run(wait.NeverStop)
+	go catalogclaimctrl.NewController(kubeClient, catalogClient, controllerResync).Run(wait.NeverStop)
 
 	m.Run(s.ServerRunOptions)
 

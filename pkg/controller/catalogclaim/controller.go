@@ -1,6 +1,7 @@
 package catalogentry
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/golang/glog"
@@ -8,7 +9,6 @@ import (
 	"k8s.io/kubernetes/pkg/apis/servicecatalog"
 	"k8s.io/kubernetes/pkg/client/cache"
 	clientset "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset"
-	"k8s.io/kubernetes/pkg/client/typed/dynamic"
 	"k8s.io/kubernetes/pkg/controller"
 	"k8s.io/kubernetes/pkg/controller/framework"
 	"k8s.io/kubernetes/pkg/runtime"
@@ -17,14 +17,16 @@ import (
 )
 
 type Controller struct {
-	kubeClient      clientset.Interface
-	catalogClient   clientset.Interface
-	claimStore      StoreToCatalogClaimLister
-	claimController *framework.Controller
-	clientPool      dynamic.ClientPool
+	kubeClient       clientset.Interface
+	catalogClient    clientset.Interface
+	claimStore       StoreToCatalogClaimLister
+	claimController  *framework.Controller
+	secretStore      cache.Store
+	secretController *framework.Controller
+	//clientPool      dynamic.ClientPool
 }
 
-func NewController(kubeClient clientset.Interface, catalogClient clientset.Interface, resyncPeriod controller.ResyncPeriodFunc, clientPool dynamic.ClientPool) *Controller {
+func NewController(kubeClient clientset.Interface, catalogClient clientset.Interface, resyncPeriod controller.ResyncPeriodFunc) *Controller {
 	c := &Controller{
 		kubeClient:    kubeClient,
 		catalogClient: catalogClient,
@@ -48,12 +50,31 @@ func NewController(kubeClient clientset.Interface, catalogClient clientset.Inter
 		},
 	)
 
+	c.secretStore, c.secretController = framework.NewInformer(
+		&cache.ListWatch{
+			ListFunc: func(options api.ListOptions) (runtime.Object, error) {
+				return c.kubeClient.Core().Secrets(api.NamespaceAll).List(options)
+			},
+			WatchFunc: func(options api.ListOptions) (watch.Interface, error) {
+				return c.kubeClient.Core().Secrets(api.NamespaceAll).Watch(options)
+			},
+		},
+		&api.Secret{},
+		resyncPeriod(),
+		framework.ResourceEventHandlerFuncs{
+			AddFunc:    c.secretAdded,
+			UpdateFunc: c.secretUpdated,
+			DeleteFunc: c.secretDeleted,
+		},
+	)
+
 	return c
 }
 
 func (c *Controller) Run(stopCh <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 	go c.claimController.Run(stopCh)
+	go c.secretController.Run(stopCh)
 	<-stopCh
 	glog.Infof("Shutting down catalog claim controller")
 }
@@ -115,6 +136,33 @@ func (c *Controller) claimAdded(obj interface{}) {
 				glog.Errorf("secret creation failed: %v", err)
 				return
 			}
+			if secret.Annotations == nil {
+				secret.Annotations = make(map[string]string)
+			}
+			var claimers []api.ObjectReference
+			claimerstr, ok := secret.Annotations["claimers"]
+			if ok {
+				err := json.Unmarshal([]byte(claimerstr), claimers)
+				if err != nil {
+					glog.Errorf("unmarshal annotation failed: %v", err)
+					return
+				}
+			} else {
+				claimers = []api.ObjectReference{}
+			}
+			newclaimer := api.ObjectReference{Namespace: claim.Namespace, Name: newSecret.Name}
+			claimers = append(claimers, newclaimer)
+			claimersjson, err := json.Marshal(claimers)
+			if err != nil {
+				glog.Errorf("marshal annotation failed: %v", err)
+				return
+			}
+			secret.Annotations["claimers"] = string(claimersjson)
+			_, err = c.kubeClient.Core().Secrets(posting.Namespace).Update(secret)
+			if err != nil {
+				glog.Errorf("source secret update failed: %v", err)
+				return
+			}
 		}
 
 		// set status and created resources
@@ -123,11 +171,51 @@ func (c *Controller) claimAdded(obj interface{}) {
 }
 
 func (c *Controller) claimUpdated(oldObj, newObj interface{}) {
-
 	glog.Errorf("SETH saw updated claim")
 }
 
 func (c *Controller) claimDeleted(obj interface{}) {
-
 	glog.Errorf("SETH saw deleted claim")
+}
+
+func (c *Controller) secretAdded(obj interface{}) {
+	glog.Errorf("SETH saw added secret")
+}
+
+func (c *Controller) secretUpdated(oldObj, newObj interface{}) {
+	secret, ok := newObj.(*api.Secret)
+	if !ok {
+		glog.Errorf("expected type secret")
+		return
+	}
+	claimers, ok := secret.Annotations["claimers"]
+	if !ok {
+		glog.Errorf("SETH DEBUG no claimers annotation found")
+		return
+	}
+	var claimerSecrets []api.ObjectReference
+	if err := json.Unmarshal([]byte(claimers), &claimerSecrets); err != nil {
+		glog.Errorf("failed to unmarshal annotation %s", claimers)
+		return
+	}
+
+	for _, cs := range claimerSecrets {
+		dss, err := c.kubeClient.Core().Secrets(cs.Namespace).Get(cs.Name)
+		if err != nil {
+			glog.Errorf("could not find claimer secret %s/%s", cs.Namespace, cs.Name)
+			continue
+		}
+		dss.Data = secret.Data
+		_, err = c.kubeClient.Core().Secrets(cs.Namespace).Update(dss)
+		if err != nil {
+			glog.Errorf("could not update claimer secret %s/%s", cs.Namespace, cs.Name)
+			continue
+		}
+	}
+
+	glog.Errorf("SETH saw updated secret")
+}
+
+func (c *Controller) secretDeleted(obj interface{}) {
+	glog.Errorf("SETH saw deleted secret")
 }
