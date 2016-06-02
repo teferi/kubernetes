@@ -57,6 +57,44 @@ func NewCmdLink(f *cmdutil.Factory, out io.Writer) *cobra.Command {
 	return cmd
 }
 
+func secretToEnvVars(secret *api.Secret) []v1.EnvVar {
+	envVars := []v1.EnvVar{}
+	for key := range secret.Data {
+		envVar := v1.EnvVar{
+			Name: fmt.Sprintf("%s_%s", strings.ToUpper(secret.Name), strings.ToUpper(key)),
+			ValueFrom: &v1.EnvVarSource{
+				SecretKeyRef: &v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{
+						Name: secret.Name,
+					},
+					Key: key,
+				},
+			},
+		}
+		envVars = append(envVars, envVar)
+	}
+	return envVars
+}
+
+func configMapToEnvVars(configMap *api.ConfigMap) []v1.EnvVar {
+	envVars := []v1.EnvVar{}
+	for key := range configMap.Data {
+		envVar := v1.EnvVar{
+			Name: fmt.Sprintf("%s_%s", strings.ToUpper(configMap.Name), strings.ToUpper(key)),
+			ValueFrom: &v1.EnvVarSource{
+				ConfigMapKeyRef: &v1.ConfigMapKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{
+						Name: configMap.Name,
+					},
+					Key: key,
+				},
+			},
+		}
+		envVars = append(envVars, envVar)
+	}
+	return envVars
+}
+
 // RunLink implements the Link command
 func RunLink(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, args []string) error {
 	cmdNamespace, _, err := f.DefaultNamespace()
@@ -81,12 +119,10 @@ func RunLink(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, args []strin
 	if len(infos) != 2 {
 		return fmt.Errorf("TODO %d", len(infos))
 	}
-	// secret
-	secretInfo := infos[0]
+	// secret or configmap
+	fromInfo := infos[0]
 	// deploymentInfo
 	deploymentInfo := infos[1]
-
-	fmt.Printf("From:\n%#v\nTo:\n%#v\n", secretInfo, deploymentInfo)
 
 	deploymentObj, err := deploymentInfo.Mapping.ConvertToVersion(deploymentInfo.Object, deploymentInfo.Mapping.GroupVersionKind.GroupVersion())
 	if err != nil {
@@ -100,42 +136,23 @@ func RunLink(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, args []strin
 		return err
 	}
 
-	// modify here
-
-	secret, ok := secretInfo.Object.(*api.Secret)
-	if !ok {
-		return fmt.Errorf("expected secret type")
-	}
-
-	fmt.Printf("%#v\n\n", secret)
-
 	for i := range deployment.Spec.Template.Spec.Containers {
 		container := &deployment.Spec.Template.Spec.Containers[i]
-		for key := range secret.Data {
-			envvar := v1.EnvVar{
-				Name: fmt.Sprintf("%s_%s", strings.ToUpper(secret.Name), strings.ToUpper(key)),
-				ValueFrom: &v1.EnvVarSource{
-					SecretKeyRef: &v1.SecretKeySelector{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: secret.Name,
-						},
-						Key: key,
-					},
-				},
-			}
-			container.Env = append(container.Env, envvar)
+		switch from := fromInfo.Object.(type) {
+		case *api.Secret:
+			container.Env = append(container.Env, secretToEnvVars(from)...)
+		case *api.ConfigMap:
+			container.Env = append(container.Env, configMapToEnvVars(from)...)
+		default:
+			return fmt.Errorf("Link source must be a Secret and ConfigMap")
 		}
 	}
-
-	fmt.Printf("%#v\n", deployment.Spec.Template.Spec.Containers[0].Env[0].ValueFrom.SecretKeyRef)
 
 	newData, err := json.Marshal(deployment)
 	if err != nil {
 		return err
 	}
 	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(oldData, newData, deployment)
-
-	fmt.Printf("%s\n", string(patchBytes))
 
 	createdPatch := err == nil
 	if err != nil {
@@ -168,8 +185,6 @@ func RunLink(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, args []strin
 	}
 
 	cmdutil.PrintSuccess(mapper, false, o.out, info.Mapping.Resource, info.Name, "linked")*/
-
-	fmt.Println("yay!")
 
 	return nil
 }
