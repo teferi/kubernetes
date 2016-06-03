@@ -18,20 +18,20 @@ limitations under the License.
 package options
 
 import (
-	"k8s.io/kubernetes/pkg/genericapiserver"
+	"k8s.io/kubernetes/pkg/genericapiserver/options"
 
 	"github.com/spf13/pflag"
 )
 
 // APIServer runs a kubernetes api server.
 type APIServer struct {
-	*genericapiserver.ServerRunOptions
+	*options.ServerRunOptions
 }
 
 // NewAPIServer creates a new APIServer object with default parameters
 func NewAPIServer() *APIServer {
 	s := APIServer{
-		ServerRunOptions: genericapiserver.NewServerRunOptions(),
+		ServerRunOptions: options.NewServerRunOptions(),
 	}
 	return &s
 }

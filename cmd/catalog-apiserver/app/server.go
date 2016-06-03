@@ -35,6 +35,7 @@ import (
 	catalogclaimctrl "k8s.io/kubernetes/pkg/controller/catalogclaim"
 	catalogentryctrl "k8s.io/kubernetes/pkg/controller/catalogentry"
 	"k8s.io/kubernetes/pkg/genericapiserver"
+	genericoptions "k8s.io/kubernetes/pkg/genericapiserver/options"
 	catalogetcd "k8s.io/kubernetes/pkg/registry/catalog/etcd"
 	catalogclaimetcd "k8s.io/kubernetes/pkg/registry/catalogclaim/etcd"
 	"k8s.io/kubernetes/pkg/registry/catalogentry"
@@ -65,7 +66,7 @@ func Run(s *options.APIServer) error {
 
 	// Create Storage
 	config := storagebackend.Config{
-		Prefix:     genericapiserver.DefaultEtcdPathPrefix,
+		Prefix:     genericoptions.DefaultEtcdPathPrefix,
 		ServerList: s.ServerRunOptions.StorageConfig.ServerList,
 	}
 	storageFactory := genericapiserver.NewDefaultStorageFactory(config, "application/json", api.Codecs, genericapiserver.NewDefaultResourceEncodingConfig(), genericapiserver.NewResourceConfig())
