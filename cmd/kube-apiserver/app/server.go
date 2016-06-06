@@ -258,6 +258,8 @@ func Run(s *options.APIServer) error {
 	genericConfig.ProxyDialer = proxyDialerFn
 	genericConfig.ProxyTLSClientConfig = proxyTLSClientConfig
 	genericConfig.Serializer = api.Codecs
+	genericConfig.ReadWritePort = 8080
+	genericConfig.ServiceReadWritePort = 8080
 
 	config := &master.Config{
 		Config:                  genericConfig,

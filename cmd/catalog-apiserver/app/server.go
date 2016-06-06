@@ -52,7 +52,8 @@ func Run(s *options.APIServer) error {
 	genericapiserver.DefaultAndValidateRunOptions(s.ServerRunOptions)
 
 	c := genericapiserver.NewConfig(s.ServerRunOptions)
-
+	c.ReadWritePort = 8081
+	c.ServiceReadWritePort = 8081
 	/*c.ProxyDialer = func(network, addr string) (net.Conn, error) { return nil, nil }
 	c.ProxyTLSClientConfig = &tls.Config{}
 	c.APIPrefix = "/api"
