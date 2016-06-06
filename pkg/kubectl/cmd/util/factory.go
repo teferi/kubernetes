@@ -52,6 +52,7 @@ import (
 	"k8s.io/kubernetes/pkg/apis/policy"
 	"k8s.io/kubernetes/pkg/apis/rbac"
 	"k8s.io/kubernetes/pkg/client/restclient"
+	"k8s.io/kubernetes/pkg/client/typed/dynamic"
 	client "k8s.io/kubernetes/pkg/client/unversioned"
 	clientset "k8s.io/kubernetes/pkg/client/unversioned/adapters/internalclientset"
 	"k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
@@ -363,19 +364,27 @@ func NewFactory(optionalClientConfig clientcmd.ClientConfig) *Factory {
 			case rbac.GroupName:
 				return c.RbacClient.RESTClient, nil
 			default:
-				if !registered.IsThirdPartyAPIGroupVersion(gvk.GroupVersion()) {
-					return nil, fmt.Errorf("unknown api group/version: %s", gvk.String())
+				if registered.IsThirdPartyAPIGroupVersion(gvk.GroupVersion()) {
+					cfg, err := clientConfig.ClientConfig()
+					if err != nil {
+						return nil, err
+					}
+					gv := gvk.GroupVersion()
+					cfg.GroupVersion = &gv
+					cfg.APIPath = "/apis"
+					cfg.Codec = thirdpartyresourcedata.NewCodec(c.ExtensionsClient.RESTClient.Codec(), gvk)
+					cfg.NegotiatedSerializer = thirdpartyresourcedata.NewNegotiatedSerializer(api.Codecs, gvk.Kind, gv, gv)
+					return restclient.RESTClientFor(cfg)
 				}
-				cfg, err := clientConfig.ClientConfig()
-				if err != nil {
-					return nil, err
+				dcc, err := clientConfig.ClientConfig()
+				dcc.APIPath = "/apis"
+				clientPool := dynamic.NewClientPool(dcc, dynamic.LegacyAPIPathResolverFunc)
+				dynamicClient, err := clientPool.ClientForGroupVersion(mappingVersion)
+				if err == nil {
+					return dynamicClient.GetRESTClient(), nil
 				}
-				gv := gvk.GroupVersion()
-				cfg.GroupVersion = &gv
-				cfg.APIPath = "/apis"
-				cfg.Codec = thirdpartyresourcedata.NewCodec(c.ExtensionsClient.RESTClient.Codec(), gvk)
-				cfg.NegotiatedSerializer = thirdpartyresourcedata.NewNegotiatedSerializer(api.Codecs, gvk.Kind, gv, gv)
-				return restclient.RESTClientFor(cfg)
+
+				return nil, fmt.Errorf("unknown api group/version: %s", gvk.String())
 			}
 		},
 		Describer: func(mapping *meta.RESTMapping) (kubectl.Describer, error) {

@@ -84,6 +84,10 @@ func NewClient(conf *restclient.Config) (*Client, error) {
 	return &Client{cl: cl}, nil
 }
 
+func (c *Client) GetRESTClient() *restclient.RESTClient {
+	return c.cl
+}
+
 // Resource returns an API interface to the specified resource for this client's
 // group and version. If resource is not a namespaced resource, then namespace
 // is ignored.

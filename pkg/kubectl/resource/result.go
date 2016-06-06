@@ -246,6 +246,9 @@ func AsVersionedObjects(infos []*Info, version unversioned.GroupVersion, encoder
 		case *extensions.ThirdPartyResourceData:
 			objects = append(objects, &runtime.Unknown{Raw: obj.Data})
 			continue
+		case *runtime.Unstructured:
+			objects = append(objects, info.Object)
+			continue
 		}
 
 		// objects that are not part of api.Scheme must be converted to JSON
