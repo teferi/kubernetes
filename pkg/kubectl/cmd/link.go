@@ -61,7 +61,7 @@ func secretToEnvVars(secret *api.Secret) []v1.EnvVar {
 	envVars := []v1.EnvVar{}
 	for key := range secret.Data {
 		envVar := v1.EnvVar{
-			Name: fmt.Sprintf("%s_%s", strings.ToUpper(secret.Name), strings.ToUpper(key)),
+			Name: fmt.Sprintf("%s_%s", strings.Replace(strings.ToUpper(secret.Name), "-", "_", -1), strings.ToUpper(key)),
 			ValueFrom: &v1.EnvVarSource{
 				SecretKeyRef: &v1.SecretKeySelector{
 					LocalObjectReference: v1.LocalObjectReference{
