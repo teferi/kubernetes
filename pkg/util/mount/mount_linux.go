@@ -164,21 +164,17 @@ func (*Mounter) List() ([]MountPoint, error) {
 // mkdir /tmp/a /tmp/b; mount --bin /tmp/a /tmp/b; IsLikelyNotMountPoint("/tmp/b")
 // will return true. When in fact /tmp/b is a mount point. If this situation
 // if of interest to you, don't use this function...
-func (mounter *Mounter) IsLikelyNotMountPoint(file string) (bool, error) {
-	return IsNotMountPoint(file)
-}
-
-func IsNotMountPoint(file string) (bool, error) {
-	stat, err := os.Stat(file)
+func (mounter *Mounter) IsLikelyNotMountPoint(directory string) (bool, error) {
+	directoryDev, _, err := GetDeviceNameFromMount(mounter, directory)
 	if err != nil {
 		return true, err
 	}
-	rootStat, err := os.Lstat(file + "/..")
+	parentDev, _, err := GetDeviceNameFromMount(mounter, directory+"/..")
 	if err != nil {
 		return true, err
 	}
 	// If the directory has a different device as parent, then it is a mountpoint.
-	if stat.Sys().(*syscall.Stat_t).Dev != rootStat.Sys().(*syscall.Stat_t).Dev {
+	if directoryDev != parentDev {
 		return false, nil
 	}
 
