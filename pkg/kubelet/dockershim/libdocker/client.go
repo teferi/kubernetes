@@ -22,6 +22,7 @@ import (
 
 	dockerapi "github.com/docker/engine-api/client"
 	dockertypes "github.com/docker/engine-api/types"
+	dockercontainer "github.com/docker/engine-api/types/container"
 	"github.com/golang/glog"
 )
 
@@ -47,6 +48,7 @@ type Interface interface {
 	CreateContainer(dockertypes.ContainerCreateConfig) (*dockertypes.ContainerCreateResponse, error)
 	StartContainer(id string) error
 	StopContainer(id string, timeout int) error
+	UpdateContainerResources(id string, updateConfig dockercontainer.UpdateConfig) error
 	RemoveContainer(id string, opts dockertypes.ContainerRemoveOptions) error
 	InspectImageByRef(imageRef string) (*dockertypes.ImageInspect, error)
 	InspectImageByID(imageID string) (*dockertypes.ImageInspect, error)
