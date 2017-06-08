@@ -62,6 +62,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/cm"
 	"k8s.io/kubernetes/pkg/kubelet/config"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
+	"k8s.io/kubernetes/pkg/kubelet/cpuset"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim/libdocker"
 	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
@@ -493,6 +494,8 @@ func NewMainKubelet(kubeCfg *componentconfig.KubeletConfiguration, kubeDeps *Kub
 	// podManager is also responsible for keeping secretManager contents up-to-date.
 	klet.podManager = kubepod.NewBasicPodManager(kubepod.NewBasicMirrorClient(klet.kubeClient), secretManager)
 
+	klet.statusManager = status.NewManager(klet.kubeClient, klet.podManager, klet)
+
 	if kubeCfg.RemoteRuntimeEndpoint != "" {
 		// kubeCfg.RemoteImageEndpoint is same as kubeCfg.RemoteRuntimeEndpoint if not explicitly specified
 		if kubeCfg.RemoteImageEndpoint == "" {
@@ -577,6 +580,10 @@ func NewMainKubelet(kubeCfg *componentconfig.KubeletConfiguration, kubeDeps *Kub
 			return nil, fmt.Errorf("unsupported CRI runtime: %q", kubeCfg.ContainerRuntime)
 		}
 		runtimeService, imageService, err := getRuntimeAndImageServices(kubeCfg)
+		klet.cpusetManager, err = cpuset.NewStaticManager(klet, klet.statusManager, runtimeService)
+		if err != nil {
+			return nil, err
+		}
 		runtime, err := kuberuntime.NewKubeGenericRuntimeManager(
 			kubecontainer.FilterEventRecorder(kubeDeps.Recorder),
 			klet.livenessManager,
@@ -593,6 +600,7 @@ func NewMainKubelet(kubeCfg *componentconfig.KubeletConfiguration, kubeDeps *Kub
 			kubeCfg.CPUCFSQuota,
 			runtimeService,
 			imageService,
+			klet.cpusetManager,
 		)
 		if err != nil {
 			return nil, err
@@ -655,8 +663,6 @@ func NewMainKubelet(kubeCfg *componentconfig.KubeletConfiguration, kubeDeps *Kub
 		return nil, fmt.Errorf("failed to initialize image manager: %v", err)
 	}
 	klet.imageManager = imageManager
-
-	klet.statusManager = status.NewManager(klet.kubeClient, klet.podManager, klet)
 
 	klet.probeManager = prober.NewManager(
 		klet.statusManager,
@@ -1039,6 +1045,9 @@ type Kubelet struct {
 	// dockerLegacyService contains some legacy methods for backward compatibility.
 	// It should be set only when docker is using non json-file logging driver.
 	dockerLegacyService dockershim.DockerLegacyService
+
+	// cpuset Manager
+	cpusetManager cpuset.Manager
 }
 
 // setupDataDirs creates:
@@ -1144,6 +1153,9 @@ func (kl *Kubelet) initializeModules() error {
 
 	// Step 8: Start resource analyzer
 	kl.resourceAnalyzer.Start()
+
+	// Step 9: Start the cpuset manager
+	kl.cpusetManager.Start()
 
 	return nil
 }

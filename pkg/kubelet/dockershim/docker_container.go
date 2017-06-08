@@ -151,6 +151,7 @@ func (ds *dockerService) CreateContainer(podSandboxID string, config *runtimeapi
 				CPUShares:  rOpts.CpuShares,
 				CPUQuota:   rOpts.CpuQuota,
 				CPUPeriod:  rOpts.CpuPeriod,
+				CpusetCpus: rOpts.CpusetCpus,
 			}
 			hc.OomScoreAdj = int(rOpts.OomScoreAdj)
 		}
