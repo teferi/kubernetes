@@ -81,7 +81,7 @@ func (m *kubeGenericRuntimeManager) startContainer(podSandboxID string, podSandb
 		m.recorder.Eventf(ref, v1.EventTypeWarning, events.FailedToCreateContainer, "Failed to create container with error: %v", err)
 		return "Create Container Failed", err
 	}
-	m.cpusetManager.RegisterContainer(pod, container, containerID)
+	m.cpuManager.RegisterContainer(pod, container, containerID)
 	m.recorder.Eventf(ref, v1.EventTypeNormal, events.CreatedContainer, "Created container with id %v", containerID)
 	if ref != nil {
 		m.containerRefManager.SetRef(kubecontainer.ContainerID{
@@ -213,6 +213,8 @@ func (m *kubeGenericRuntimeManager) generateLinuxContainerConfig(container *v1.C
 	}
 	lc.Resources.CpuShares = cpuShares
 	// SETH set initial cpuset here maybe?
+	// TODO(CD): Alternatively, could pass in kube/system reserved resources
+	//           to the CPU Manager type constructor and figure it out locally.
 	if memoryLimit != 0 {
 		lc.Resources.MemoryLimitInBytes = memoryLimit
 	}
@@ -744,7 +746,7 @@ func (m *kubeGenericRuntimeManager) removeContainer(containerID string) error {
 	if err := m.removeContainerLog(containerID); err != nil {
 		return err
 	}
-	m.cpusetManager.UnregisterContainer(containerID)
+	m.cpuManager.UnregisterContainer(containerID)
 	// Remove the container.
 	return m.runtimeService.RemoveContainer(containerID)
 }

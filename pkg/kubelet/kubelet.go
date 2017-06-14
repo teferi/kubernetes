@@ -62,7 +62,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/cm"
 	"k8s.io/kubernetes/pkg/kubelet/config"
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
-	"k8s.io/kubernetes/pkg/kubelet/cpuset"
+	"k8s.io/kubernetes/pkg/kubelet/cpumanager"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim"
 	"k8s.io/kubernetes/pkg/kubelet/dockershim/libdocker"
 	dockerremote "k8s.io/kubernetes/pkg/kubelet/dockershim/remote"
@@ -580,10 +580,19 @@ func NewMainKubelet(kubeCfg *componentconfig.KubeletConfiguration, kubeDeps *Kub
 			return nil, fmt.Errorf("unsupported CRI runtime: %q", kubeCfg.ContainerRuntime)
 		}
 		runtimeService, imageService, err := getRuntimeAndImageServices(kubeCfg)
-		klet.cpusetManager, err = cpuset.NewStaticManager(klet, klet.statusManager, runtimeService)
+
+		klet.cpuManager, err = cpumanager.NewManager(
+			// TODO(CD): Make the CPU Manager policy configurable.
+			// cpumanager.NewNoopPolicy(),
+			cpumanager.NewStaticPolicy(), // policy
+			runtimeService,               // runtime service
+			klet,                         // pod lister
+			klet.statusManager)
 		if err != nil {
+			glog.Infof("[cpumanager] cpu manager instantiation yielded error: %v", err)
 			return nil, err
 		}
+
 		runtime, err := kuberuntime.NewKubeGenericRuntimeManager(
 			kubecontainer.FilterEventRecorder(kubeDeps.Recorder),
 			klet.livenessManager,
@@ -600,7 +609,7 @@ func NewMainKubelet(kubeCfg *componentconfig.KubeletConfiguration, kubeDeps *Kub
 			kubeCfg.CPUCFSQuota,
 			runtimeService,
 			imageService,
-			klet.cpusetManager,
+			klet.cpuManager,
 		)
 		if err != nil {
 			return nil, err
@@ -1046,8 +1055,8 @@ type Kubelet struct {
 	// It should be set only when docker is using non json-file logging driver.
 	dockerLegacyService dockershim.DockerLegacyService
 
-	// cpuset Manager
-	cpusetManager cpuset.Manager
+	// CPU Manager
+	cpuManager cpumanager.Manager
 }
 
 // setupDataDirs creates:
@@ -1154,8 +1163,8 @@ func (kl *Kubelet) initializeModules() error {
 	// Step 8: Start resource analyzer
 	kl.resourceAnalyzer.Start()
 
-	// Step 9: Start the cpuset manager
-	kl.cpusetManager.Start()
+	// Step 9: Start the CPU manager
+	kl.cpuManager.Start()
 
 	return nil
 }

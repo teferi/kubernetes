@@ -492,6 +492,7 @@ func (cm *containerManagerImpl) Start(node *v1.Node, activePods ActivePodsFunc) 
 	cm.nodeInfo = node
 	// Setup the node
 	if err := cm.setupNode(activePods); err != nil {
+		glog.Errorf("[ContainerManager] cm.setupNode returned error: %v", err)
 		return err
 	}
 	// Ensure that node allocatable configuration is valid.

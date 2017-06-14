@@ -14,6 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+package cpumanager
+
+/*
+
 package cpuset
 
 import (
@@ -35,45 +39,6 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/qos"
 	"k8s.io/kubernetes/pkg/kubelet/status"
 )
-
-// Manager is responsible for managing the cpusets of containers on the node
-type Manager interface {
-	Start()
-
-	// RegisterContainer registers a container with the cpuset manager
-	// resulting in synchronous setting on the container cpuset.  This
-	// is called after RegisterContainer(), which creates the containerID, and
-	// before StartContainer(), such that the cpuset is configured before
-	// the container starts
-	RegisterContainer(p *v1.Pod, c *v1.Container, containerID string) error
-
-	// UnregisterContainer is called near UnregisterContainer() so that the manager
-	// stops trying to update that container in the reconcilation loop and
-	// any CPUs dedicated to the container are freed to the shared pool.
-	UnregisterContainer(containerID string) error
-}
-
-type noopManager struct{}
-
-var _ Manager = &noopManager{}
-
-// NewNoopManager returns a cupset manager that does nothing
-func NewNoopManager() (Manager, error) {
-	return &noopManager{}, nil
-}
-
-func (m *noopManager) Start() {
-}
-
-func (m *noopManager) RegisterContainer(p *v1.Pod, c *v1.Container, containerID string) error {
-	glog.Errorf("SETH noopManager RegisterContainer")
-	return nil
-}
-
-func (m *noopManager) UnregisterContainer(containerID string) error {
-	glog.Errorf("SETH noopManager UnregisterContainer")
-	return nil
-}
 
 type cpuInfo struct {
 	cpus int64
@@ -117,13 +82,13 @@ type staticManager struct {
 
 var _ Manager = &staticManager{}
 
-var (
-	processorRegExp = regexp.MustCompile(`^processor\s*:\s*([0-9]+)$`)
-)
-
 type podLister interface {
 	GetPods() []*v1.Pod
 }
+
+var (
+	processorRegExp = regexp.MustCompile(`^processor\s*:\s*([0-9]+)$`)
+)
 
 func discoverCPUInfo(cpuinfo []byte) (*cpuInfo, error) {
 	cpus := int64(0)
@@ -352,3 +317,4 @@ func (m *staticManager) UnregisterContainer(containerID string) error {
 	}
 	return nil
 }
+*/
