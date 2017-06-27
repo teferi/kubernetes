@@ -18,12 +18,10 @@ package cpumanager
 
 import (
 	"fmt"
-	"io/ioutil"
-	"regexp"
-	"strings"
 	"sync"
 	"time"
 
+	cadvisorapi "github.com/google/cadvisor/info/v1"
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/kubernetes/pkg/api/v1"
@@ -32,10 +30,12 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/cpumanager/state"
 	"k8s.io/kubernetes/pkg/kubelet/cpumanager/topo"
 	"k8s.io/kubernetes/pkg/kubelet/status"
+	"github.com/coreos/rkt/pkg/flag"
 )
 
-type podLister interface {
+type kletGetter interface {
 	GetPods() []*v1.Pod
+	GetCachedMachineInfo() (*cadvisorapi.MachineInfo, error)
 }
 
 type Manager interface {
@@ -58,12 +58,9 @@ type Manager interface {
 	State() state.Reader
 }
 
-func NewManager(p Policy, cr internalapi.RuntimeService, lister podLister, statusProvider status.PodStatusProvider) (Manager, error) {
-	cpuInfoFile, err := ioutil.ReadFile("/proc/cpuinfo")
-	if err != nil {
-		return nil, err
-	}
-	topo, err := discoverTopology(cpuInfoFile)
+func NewManager(p Policy, cr internalapi.RuntimeService, kletGetter kletGetter, statusProvider status.PodStatusProvider) (Manager, error) {
+
+	topo, err := discoverTopology(kletGetter)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +71,7 @@ func NewManager(p Policy, cr internalapi.RuntimeService, lister podLister, statu
 		policy:            p,
 		state:             state.NewMemoryState(topo),
 		containerRuntime:  cr,
-		podLister:         lister,
+		kletGetter:         kletGetter,
 		podStatusProvider: statusProvider,
 	}, nil
 }
@@ -90,7 +87,7 @@ type manager struct {
 
 	// podLister provides a method for listing all the pods on the node
 	// so all the containers can be updated in the reconciliation loop.
-	podLister podLister
+	kletGetter kletGetter
 
 	// podStatusProvider provides a method for obtaining pod statuses
 	// and the containerID of their containers
@@ -146,23 +143,32 @@ func (m *manager) State() state.Reader {
 	return m.state
 }
 
-var (
-	processorRegExp = regexp.MustCompile(`^processor\s*:\s*([0-9]+)$`)
-)
 
-func discoverTopology(cpuinfo []byte) (*topo.CPUTopology, error) {
-	cpus := 0
-	for _, line := range strings.Split(string(cpuinfo), "\n") {
-		matches := processorRegExp.FindSubmatch([]byte(line))
-		if len(matches) == 2 {
-			cpus++
-		}
+func discoverTopology(kletGetter kletGetter) (*topo.CPUTopology, error) {
+
+	machineInfo, err := kletGetter.GetCachedMachineInfo()
+	if err != nil {
+		return nil,err
 	}
-	if cpus == 0 {
+
+	if machineInfo.NumCores == 0 {
 		return nil, fmt.Errorf("could not detect number of cpus")
 	}
+
+	htEnabled := false
+	for _, node := range machineInfo.Topology {
+		for _, core := range node.Cores {
+			if len(core.Threads) != 1 {
+				htEnabled = true
+				break
+			}
+		}
+	}
+
 	return &topo.CPUTopology{
-		NumCPUs: cpus,
+		NumCPUs: machineInfo.NumCores,
+		NumNode: len(machineInfo.Topology),
+		Hyperthreading: htEnabled,
 	}, nil
 }
 
@@ -170,7 +176,7 @@ func (m *manager) reconcileState() {
 	m.Lock()
 	defer m.Unlock()
 
-	for _, pod := range m.podLister.GetPods() {
+	for _, pod := range m.kletGetter.GetPods() {
 		for _, container := range pod.Spec.Containers {
 			status, ok := m.podStatusProvider.GetPodStatus(pod.UID)
 			if !ok {

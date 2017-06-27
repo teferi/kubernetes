@@ -28,7 +28,11 @@ import (
 )
 
 // CPUSet is a set-like data structure for CPU IDs.
-type CPUSet map[int]struct{}
+type CPUSet map[int]CPUInfo
+type CPUInfo struct {
+	coreID int
+	nodeId int
+}
 
 func NewCPUSet(cpus ...int) CPUSet {
 	res := CPUSet{}
@@ -57,7 +61,7 @@ func (s CPUSet) Contains(cpu int) bool {
 // Add mutates this set to contain the supplied elements.
 func (s CPUSet) Add(cpus ...int) {
 	for _, cpu := range cpus {
-		s[cpu] = struct{}{}
+		s[cpu] = CPUInfo{}
 	}
 }
 

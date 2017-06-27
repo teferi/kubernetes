@@ -20,4 +20,5 @@ package topo
 type CPUTopology struct {
 	NumCPUs        int
 	Hyperthreading bool
+	NumNode        int
 }
