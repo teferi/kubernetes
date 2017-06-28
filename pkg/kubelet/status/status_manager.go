@@ -163,7 +163,10 @@ func (m *manager) SetPodStatus(pod *v1.Pod, status v1.PodStatus) {
 	m.podStatusesLock.Lock()
 	defer m.podStatusesLock.Unlock()
 	// Make sure we're caching a deep copy.
-	status, _ = copyStatus(&status)
+	status, err := copyStatus(&status)
+	if err != nil {
+		return
+	}
 	// Force a status update if deletion timestamp is set. This is necessary
 	// because if the pod is in the non-running state, the pod worker still
 	// needs to be able to trigger an update and/or deletion.
@@ -347,7 +350,6 @@ func (m *manager) updateStatusInternal(pod *v1.Pod, status v1.PodStatus, forceUp
 
 // deletePodStatus simply removes the given pod from the status cache.
 func (m *manager) deletePodStatus(uid types.UID) {
-	glog.Infof("[cpumanager] deleting pod status for container (uid: %s)", uid)
 	m.podStatusesLock.Lock()
 	defer m.podStatusesLock.Unlock()
 	delete(m.podStatuses, uid)
