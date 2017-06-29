@@ -30,7 +30,6 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/cpumanager/state"
 	"k8s.io/kubernetes/pkg/kubelet/cpumanager/topo"
 	"k8s.io/kubernetes/pkg/kubelet/status"
-	"github.com/coreos/rkt/pkg/flag"
 )
 
 type kletGetter interface {
@@ -71,7 +70,7 @@ func NewManager(p Policy, cr internalapi.RuntimeService, kletGetter kletGetter, 
 		policy:            p,
 		state:             state.NewMemoryState(topo),
 		containerRuntime:  cr,
-		kletGetter:         kletGetter,
+		kletGetter:        kletGetter,
 		podStatusProvider: statusProvider,
 	}, nil
 }
@@ -155,20 +154,30 @@ func discoverTopology(kletGetter kletGetter) (*topo.CPUTopology, error) {
 		return nil, fmt.Errorf("could not detect number of cpus")
 	}
 
+	CPUtopoDetails := make(map[int]topo.CPUInfo)
+
 	htEnabled := false
 	for _, node := range machineInfo.Topology {
 		for _, core := range node.Cores {
-			if len(core.Threads) != 1 {
+			for _, thread := range core.Threads {y
+				
+				CPUtopoDetails[thread] = topo.CPUInfo{
+					CoreId: core.Id,
+					NodeId: node.Id,
+				}
+			}
+			if !htEnabled && len(core.Threads) != 1 {
 				htEnabled = true
-				break
 			}
 		}
 	}
 
+
 	return &topo.CPUTopology{
-		NumCPUs: machineInfo.NumCores,
-		NumNode: len(machineInfo.Topology),
+		NumCPUs:        machineInfo.NumCores,
+		NumNode:        len(machineInfo.Topology),
 		Hyperthreading: htEnabled,
+		CPUtopoDetails: CPUtopoDetails,
 	}, nil
 }
 

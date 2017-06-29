@@ -18,7 +18,13 @@ package topo
 
 // TODO
 type CPUTopology struct {
-	NumCPUs        int
-	Hyperthreading bool
-	NumNode        int
+	NumCPUs           int
+	Hyperthreading    bool
+	NumNode           int
+	CPUtopoDetails    map[int]CPUInfo
+}
+
+type CPUInfo struct {
+	NodeId int
+	CoreId int
 }
