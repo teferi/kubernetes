@@ -584,7 +584,7 @@ func NewMainKubelet(kubeCfg *componentconfig.KubeletConfiguration, kubeDeps *Kub
 		klet.cpuManager, err = cpumanager.NewManager(
 			// TODO(CD): Make the CPU Manager policy configurable.
 			// cpumanager.NewNoopPolicy(),
-			cpumanager.NewStaticPolicy(), // policy
+			//cpumanager.NewStaticPolicy(), // policy
 			runtimeService,               // runtime service
 			klet,                         // pod lister
 			klet.statusManager)

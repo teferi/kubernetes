@@ -22,20 +22,21 @@ import (
 	"github.com/golang/glog"
 	"k8s.io/kubernetes/pkg/api/v1"
 	"k8s.io/kubernetes/pkg/kubelet/cpumanager/state"
+	"k8s.io/kubernetes/pkg/kubelet/cpumanager/topo"
 	"k8s.io/kubernetes/pkg/kubelet/cpuset"
 	"k8s.io/kubernetes/pkg/kubelet/qos"
 )
 
 type staticPolicy struct {
-	sharedContainers map[string]struct{}
+	topology      *topo.CPUTopology
 }
 
 // NewStaticPolicy returns a cupset manager policy that does not change
 // CPU assignments for exclusively pinned guaranteed containers after
 // the main container process starts.
-func NewStaticPolicy() Policy {
+func NewStaticPolicy(topology *topo.CPUTopology) Policy {
 	return &staticPolicy{
-		sharedContainers: map[string]struct{}{},
+		topology: topology,
 	}
 }
 
@@ -49,7 +50,7 @@ func (p *staticPolicy) Start(s state.State) {
 	//     for infrastructure processes.
 	// TODO(CD): Improve this to align with kube/system reserved resources.
 	shared := cpuset.NewCPUSet()
-	for cpuid := 1; cpuid < s.Topology().NumCPUs; cpuid++ {
+	for cpuid := 1; cpuid < p.topology.NumCPUs; cpuid++ {
 		shared.Add(cpuid)
 	}
 	s.SetDefaultCPUSet(shared)

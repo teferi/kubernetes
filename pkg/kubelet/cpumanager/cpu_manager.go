@@ -57,7 +57,7 @@ type Manager interface {
 	State() state.Reader
 }
 
-func NewManager(p Policy, cr internalapi.RuntimeService, kletGetter kletGetter, statusProvider status.PodStatusProvider) (Manager, error) {
+func NewManager(cr internalapi.RuntimeService, kletGetter kletGetter, statusProvider status.PodStatusProvider) (Manager, error) {
 
 	topo, err := discoverTopology(kletGetter)
 	if err != nil {
@@ -66,9 +66,10 @@ func NewManager(p Policy, cr internalapi.RuntimeService, kletGetter kletGetter, 
 
 	glog.Infof("detected CPU topology: %v", topo)
 
+	//TODO(SSc): add flag to decide policy
 	return &manager{
-		policy:            p,
-		state:             state.NewMemoryState(topo),
+		policy:            NewStaticPolicy(topo),
+		state:             state.NewMemoryState(),
 		containerRuntime:  cr,
 		kletGetter:        kletGetter,
 		podStatusProvider: statusProvider,
@@ -159,7 +160,7 @@ func discoverTopology(kletGetter kletGetter) (*topo.CPUTopology, error) {
 	htEnabled := false
 	for _, node := range machineInfo.Topology {
 		for _, core := range node.Cores {
-			for _, thread := range core.Threads {y
+			for _, thread := range core.Threads {
 				
 				CPUtopoDetails[thread] = topo.CPUInfo{
 					CoreId: core.Id,
@@ -175,7 +176,7 @@ func discoverTopology(kletGetter kletGetter) (*topo.CPUTopology, error) {
 
 	return &topo.CPUTopology{
 		NumCPUs:        machineInfo.NumCores,
-		NumNode:        len(machineInfo.Topology),
+		NumNodes:       len(machineInfo.Topology),
 		Hyperthreading: htEnabled,
 		CPUtopoDetails: CPUtopoDetails,
 	}, nil
