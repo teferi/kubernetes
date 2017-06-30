@@ -142,6 +142,7 @@ func GetHollowKubeletConfig(
 	c.VolumeStatsAggPeriod.Duration = time.Minute
 	c.CgroupRoot = ""
 	c.ContainerRuntime = "docker"
+	c.CPUManagerPolicy = "noop"
 	c.CPUCFSQuota = true
 	c.RuntimeCgroups = ""
 	c.EnableControllerAttachDetach = false

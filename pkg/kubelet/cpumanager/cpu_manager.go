@@ -57,18 +57,27 @@ type Manager interface {
 	State() state.Reader
 }
 
-func NewManager(cr internalapi.RuntimeService, kletGetter kletGetter, statusProvider status.PodStatusProvider) (Manager, error) {
+func NewManager(policyTYpe string, cr internalapi.RuntimeService, kletGetter kletGetter, statusProvider status.PodStatusProvider) (Manager, error) {
+	var newPolicy Policy
 
-	topo, err := discoverTopology(kletGetter)
-	if err != nil {
-		return nil, err
+	switch policyTYpe {
+	case "noop":
+		newPolicy = NewNoopPolicy()
+	case "static":
+		topo, err := discoverTopology(kletGetter)
+		if err != nil {
+			return nil, err
+		}
+		glog.Infof("[cpumanager] detected CPU topology: %v", topo)
+		newPolicy = NewStaticPolicy(topo)
+	default:
+		glog.Warningf("[cpumanager] Invalid policy, fallback to default policy - 'noop'")
+		newPolicy = NewNoopPolicy()
 	}
 
-	glog.Infof("detected CPU topology: %v", topo)
 
-	//TODO(SSc): add flag to decide policy
 	return &manager{
-		policy:            NewStaticPolicy(topo),
+		policy:            newPolicy,
 		state:             state.NewMemoryState(),
 		containerRuntime:  cr,
 		kletGetter:        kletGetter,
@@ -93,10 +102,12 @@ type manager struct {
 	// and the containerID of their containers
 	podStatusProvider status.PodStatusProvider
 }
-
 func (m *manager) Start() {
 	glog.Infof("[cpumanger] starting (policy: \"%s\")", m.policy.Name())
 	m.policy.Start(m.state)
+	if m.policy.Name() == "noop" {
+		return
+	}
 	go wait.Until(m.reconcileState, time.Second, wait.NeverStop)
 }
 
@@ -157,27 +168,31 @@ func discoverTopology(kletGetter kletGetter) (*topo.CPUTopology, error) {
 
 	CPUtopoDetails := make(map[int]topo.CPUInfo)
 
+	numCPUs :=  machineInfo.NumCores
 	htEnabled := false
-	for _, node := range machineInfo.Topology {
-		for _, core := range node.Cores {
-			for _, thread := range core.Threads {
-				
-				CPUtopoDetails[thread] = topo.CPUInfo{
+	numPhysicalCores := 0
+	for _, socket := range machineInfo.Topology {
+		numPhysicalCores += len(socket.Cores)
+		for _, core := range socket.Cores {
+			for _, cpu := range core.Threads {
+				CPUtopoDetails[cpu] = topo.CPUInfo{
 					CoreId: core.Id,
-					NodeId: node.Id,
+					SocketId: socket.Id,
 				}
-			}
-			if !htEnabled && len(core.Threads) != 1 {
-				htEnabled = true
+				// a little bit naive
+				if !htEnabled && len(core.Threads) != 1 {
+					htEnabled = true
+				}
 			}
 		}
 	}
 
 
 	return &topo.CPUTopology{
-		NumCPUs:        machineInfo.NumCores,
-		NumNodes:       len(machineInfo.Topology),
-		Hyperthreading: htEnabled,
+		NumCPUs:        numCPUs,
+		NumSockets:     len(machineInfo.Topology),
+		NumCores:       numPhysicalCores,
+		HyperThreading: htEnabled,
 		CPUtopoDetails: CPUtopoDetails,
 	}, nil
 }

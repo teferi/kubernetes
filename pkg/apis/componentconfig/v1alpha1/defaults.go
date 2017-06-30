@@ -237,6 +237,9 @@ func SetDefaults_KubeletConfiguration(obj *KubeletConfiguration) {
 	if obj.ContainerRuntime == "" {
 		obj.ContainerRuntime = "docker"
 	}
+	if obj.CPUManagerPolicy == "" {
+		obj.CPUManagerPolicy = "noop"
+	}
 	if obj.RuntimeRequestTimeout == zeroDuration {
 		obj.RuntimeRequestTimeout = metav1.Duration{Duration: 2 * time.Minute}
 	}
