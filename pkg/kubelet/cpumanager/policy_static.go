@@ -27,6 +27,8 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/qos"
 )
 
+const PolicyStatic PolicyName = "static"
+
 type staticPolicy struct {
 	topology      *topo.CPUTopology
 }
@@ -41,7 +43,7 @@ func NewStaticPolicy(topology *topo.CPUTopology) Policy {
 }
 
 func (p *staticPolicy) Name() string {
-	return "static"
+	return string(PolicyStatic)
 }
 
 func (p *staticPolicy) Start(s state.State) {

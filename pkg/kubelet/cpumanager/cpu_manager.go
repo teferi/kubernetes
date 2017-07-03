@@ -37,6 +37,8 @@ type kletGetter interface {
 	GetCachedMachineInfo() (*cadvisorapi.MachineInfo, error)
 }
 
+type PolicyName string
+
 type Manager interface {
 	Start()
 
@@ -57,13 +59,13 @@ type Manager interface {
 	State() state.Reader
 }
 
-func NewManager(policyTYpe string, cr internalapi.RuntimeService, kletGetter kletGetter, statusProvider status.PodStatusProvider) (Manager, error) {
+func NewManager(policyType string, cr internalapi.RuntimeService, kletGetter kletGetter, statusProvider status.PodStatusProvider) (Manager, error) {
 	var newPolicy Policy
 
-	switch policyTYpe {
-	case "noop":
+	switch PolicyName(policyType) {
+	case PolicyNoop:
 		newPolicy = NewNoopPolicy()
-	case "static":
+	case PolicyStatic:
 		topo, err := discoverTopology(kletGetter)
 		if err != nil {
 			return nil, err
@@ -105,7 +107,7 @@ type manager struct {
 func (m *manager) Start() {
 	glog.Infof("[cpumanger] starting (policy: \"%s\")", m.policy.Name())
 	m.policy.Start(m.state)
-	if m.policy.Name() == "noop" {
+	if m.policy.Name() == string(PolicyNoop) {
 		return
 	}
 	go wait.Until(m.reconcileState, time.Second, wait.NeverStop)
