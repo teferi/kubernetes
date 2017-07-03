@@ -66,7 +66,11 @@ func NewManager(policyType string, cr internalapi.RuntimeService, kletGetter kle
 	case PolicyNoop:
 		newPolicy = NewNoopPolicy()
 	case PolicyStatic:
-		topo, err := discoverTopology(kletGetter)
+		machinInfo, err := kletGetter.GetCachedMachineInfo()
+		if err != nil {
+			return nil,err
+		}
+		topo, err := discoverTopology(machinInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -157,12 +161,7 @@ func (m *manager) State() state.Reader {
 }
 
 
-func discoverTopology(kletGetter kletGetter) (*topo.CPUTopology, error) {
-
-	machineInfo, err := kletGetter.GetCachedMachineInfo()
-	if err != nil {
-		return nil,err
-	}
+func discoverTopology(machineInfo *cadvisorapi.MachineInfo) (*topo.CPUTopology, error) {
 
 	if machineInfo.NumCores == 0 {
 		return nil, fmt.Errorf("could not detect number of cpus")
